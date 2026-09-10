@@ -101,7 +101,12 @@ variable "mail_non_secret_env" {
     # after the first apply — see README step 7. Can't be wired
     # automatically as a resource reference: it would create a dependency
     # cycle with api_env's CLOUD_TASKS_MAIL_SERVICE_URL (cloud_run.tf).
-    API_PUBLIC_URL = "CHANGE_ME"
+    # Placeholder must be a syntactically valid URL (pbl-mail-service's
+    # app.config.ts validates API_PUBLIC_URL with @IsUrl at boot, not
+    # optional) — a bare "CHANGE_ME" string fails validation and crash-loops
+    # the mail service, which then blocks api_env's own dependency on
+    # google_cloud_run_v2_service.mail, deadlocking the first apply entirely.
+    API_PUBLIC_URL = "https://api.invalid"
   }
 }
 
