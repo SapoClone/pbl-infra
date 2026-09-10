@@ -41,11 +41,11 @@ resource "google_cloud_tasks_queue_iam_member" "api_can_enqueue" {
   name     = google_cloud_tasks_queue.email.name
   location = google_cloud_tasks_queue.email.location
   role     = "roles/cloudtasks.enqueuer"
-  member   = "serviceAccount:${google_service_account.api_run_sa.email}"
+  member   = "serviceAccount:${module.api_run_sa.email}"
 }
 
 resource "google_service_account_iam_member" "api_can_act_as_tasks_invoker" {
   service_account_id = google_service_account.tasks_invoker.name
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${google_service_account.api_run_sa.email}"
+  member             = "serviceAccount:${module.api_run_sa.email}"
 }

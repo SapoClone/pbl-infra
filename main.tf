@@ -12,6 +12,11 @@ locals {
   all_secret_names = distinct(concat(var.secret_env_names, var.mail_secret_env_names))
 }
 
+locals {
+  api_accessor_secret_ids  = [for k, v in google_secret_manager_secret.app_secrets : v.id if contains(var.secret_env_names, k)]
+  mail_accessor_secret_ids = [for k, v in google_secret_manager_secret.app_secrets : v.id if contains(var.mail_secret_env_names, k)]
+}
+
 resource "google_project_service" "apis" {
   for_each = toset(local.apis)
 
@@ -29,16 +34,22 @@ resource "google_artifact_registry_repository" "images" {
   depends_on = [google_project_service.apis]
 }
 
-resource "google_service_account" "api_run_sa" {
+module "api_run_sa" {
+  source = "./modules/runtime_service_account"
+
   account_id   = "pbl-api-run"
   display_name = "pbl-api Cloud Run runtime"
+  secret_ids   = local.api_accessor_secret_ids
 
   depends_on = [google_project_service.apis]
 }
 
-resource "google_service_account" "mail_run_sa" {
+module "mail_run_sa" {
+  source = "./modules/runtime_service_account"
+
   account_id   = "pbl-mail-run"
   display_name = "pbl-mail-service Cloud Run runtime"
+  secret_ids   = local.mail_accessor_secret_ids
 
   depends_on = [google_project_service.apis]
 }
@@ -52,20 +63,4 @@ resource "google_secret_manager_secret" "app_secrets" {
   }
 
   depends_on = [google_project_service.apis]
-}
-
-resource "google_secret_manager_secret_iam_member" "api_sa_accessor" {
-  for_each = { for k, v in google_secret_manager_secret.app_secrets : k => v if contains(var.secret_env_names, k) }
-
-  secret_id = each.value.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.api_run_sa.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "mail_sa_accessor" {
-  for_each = { for k, v in google_secret_manager_secret.app_secrets : k => v if contains(var.mail_secret_env_names, k) }
-
-  secret_id = each.value.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.mail_run_sa.email}"
 }

@@ -38,7 +38,7 @@ module "api_service" {
 
   name                  = var.api_service_name
   location              = var.region
-  service_account_email = google_service_account.api_run_sa.email
+  service_account_email = module.api_run_sa.email
   image                 = local.api_image
   env                   = local.api_env
   secret_env            = local.api_secret_env
@@ -54,7 +54,7 @@ module "mail_service" {
 
   name                  = var.mail_service_name
   location              = var.region
-  service_account_email = google_service_account.mail_run_sa.email
+  service_account_email = module.mail_run_sa.email
   image                 = local.mail_image
   env                   = local.mail_env
   secret_env            = local.mail_secret_env

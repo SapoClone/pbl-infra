@@ -22,11 +22,11 @@ output "tasks_invoker_service_account_email" {
 }
 
 output "api_deployer_service_account_email" {
-  value = google_service_account.api_deployer.email
+  value = module.api_deployer.email
 }
 
 output "mail_deployer_service_account_email" {
-  value = google_service_account.mail_deployer.email
+  value = module.mail_deployer.email
 }
 
 output "workload_identity_provider" {
