@@ -1,10 +1,10 @@
 output "api_url" {
-  value = google_cloud_run_v2_service.api.uri
+  value = module.api_service.uri
 }
 
 output "mail_service_url" {
   description = "Cloud Tasks target base URL — pbl-api needs this as CLOUD_TASKS_MAIL_SERVICE_URL."
-  value       = google_cloud_run_v2_service.mail.uri
+  value       = module.mail_service.uri
 }
 
 output "artifact_registry_repo" {

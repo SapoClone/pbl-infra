@@ -45,8 +45,8 @@ resource "google_project_iam_member" "api_deployer_artifact_writer" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "api_deployer_run_admin" {
-  name     = google_cloud_run_v2_service.api.name
-  location = google_cloud_run_v2_service.api.location
+  name     = module.api_service.name
+  location = module.api_service.location
   role     = "roles/run.admin"
   member   = "serviceAccount:${google_service_account.api_deployer.email}"
 }
@@ -79,8 +79,8 @@ resource "google_project_iam_member" "mail_deployer_artifact_writer" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "mail_deployer_run_admin" {
-  name     = google_cloud_run_v2_service.mail.name
-  location = google_cloud_run_v2_service.mail.location
+  name     = module.mail_service.name
+  location = module.mail_service.location
   role     = "roles/run.admin"
   member   = "serviceAccount:${google_service_account.mail_deployer.email}"
 }

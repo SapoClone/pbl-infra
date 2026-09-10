@@ -29,8 +29,8 @@ resource "google_service_account" "tasks_invoker" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "mail_invocable_by_tasks" {
-  name     = google_cloud_run_v2_service.mail.name
-  location = google_cloud_run_v2_service.mail.location
+  name     = module.mail_service.name
+  location = module.mail_service.location
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.tasks_invoker.email}"
 }
