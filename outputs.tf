@@ -12,7 +12,7 @@ output "artifact_registry_repo" {
 }
 
 output "cloud_tasks_queue_name" {
-  description = "Full queue resource name — pbl-api needs this as CLOUD_TASKS_QUEUE_NAME."
+  description = "Bare queue id (not the full projects/.../queues/... resource path) — pbl-api needs this as CLOUD_TASKS_QUEUE_NAME."
   value       = google_cloud_tasks_queue.email.name
 }
 

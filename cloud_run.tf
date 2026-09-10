@@ -4,13 +4,28 @@ locals {
 
   api_env = merge(var.non_secret_env, {
     NODE_ENV = "production"
-    # pbl-api needs the mail service's own URL to build the Cloud Tasks
-    # target — filled in as a real value after the first `terraform apply`
-    # creates google_cloud_run_v2_service.mail (see cloud_tasks.tf, Task 12).
+    # pbl-api's Cloud Tasks config (cloud-tasks.config.ts) requires all five
+    # of these at boot. Wired here as real cross-references (rather than
+    # CHANGE_ME placeholders in variables.tf) since this locals block is
+    # evaluated after the referenced resources exist.
+    GCP_PROJECT_ID       = var.project_id
+    CLOUD_TASKS_LOCATION = var.region
+    # Bare queue id, NOT the full projects/.../queues/... resource path —
+    # CloudTasksService.queuePath() builds the full path itself. The
+    # google_cloud_tasks_queue.name attribute is not normalized by the
+    # provider, so this stays the short id we set in cloud_tasks.tf.
+    CLOUD_TASKS_QUEUE_NAME       = google_cloud_tasks_queue.email.name
+    CLOUD_TASKS_MAIL_SERVICE_URL = google_cloud_run_v2_service.mail.uri
+    CLOUD_TASKS_INVOKER_SA_EMAIL = google_service_account.tasks_invoker.email
   })
 
   mail_env = merge(var.mail_non_secret_env, {
     NODE_ENV = "production"
+    # API_PUBLIC_URL can't be wired as a real google_cloud_run_v2_service.api.uri
+    # reference here: api_env above already depends on google_cloud_run_v2_service.mail,
+    # so doing so would create a dependency cycle between the two services.
+    # Left as the CHANGE_ME placeholder in variables.tf's mail_non_secret_env —
+    # set it manually after the first apply (see README).
   })
 }
 

@@ -97,6 +97,11 @@ variable "mail_non_secret_env" {
     APP_LOG_SERVICE   = "console"
     RESEND_FROM_EMAIL = "noreply@example.com"
     RESEND_FROM_NAME  = "pbl-api"
+    # Must be set to pbl-api's real public URL (terraform output api_url)
+    # after the first apply — see README step 7. Can't be wired
+    # automatically as a resource reference: it would create a dependency
+    # cycle with api_env's CLOUD_TASKS_MAIL_SERVICE_URL (cloud_run.tf).
+    API_PUBLIC_URL = "CHANGE_ME"
   }
 }
 

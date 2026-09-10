@@ -98,20 +98,22 @@ Non-secret config that still needs a real value (set via `terraform.tfvars`'
 | `DATABASE_HOST`/`DATABASE_USERNAME`/`DATABASE_NAME` | pbl-api | Neon project dashboard |
 | `REDIS_HOST` | pbl-api | Upstash database dashboard |
 | `RESEND_FROM_EMAIL`/`RESEND_FROM_NAME` | pbl-mail-service | Whatever sending identity you verified in Resend |
-| `CLOUD_TASKS_MAIL_SERVICE_URL`/`CLOUD_TASKS_QUEUE_NAME`/`CLOUD_TASKS_INVOKER_SA_EMAIL` | pbl-api | `terraform output` after the first apply (step 7 below) — not from an external dashboard, from this same Terraform run |
+| `API_PUBLIC_URL` | pbl-mail-service | `terraform output api_url` after the first apply (step 7 below) — can't be wired automatically (would create a Terraform dependency cycle with pbl-api's `CLOUD_TASKS_MAIL_SERVICE_URL`), so it must be set manually |
 
-## 7. Wire up the Cloud Tasks values into pbl-api's env, then apply again
+`CLOUD_TASKS_MAIL_SERVICE_URL`, `CLOUD_TASKS_QUEUE_NAME`,
+`CLOUD_TASKS_INVOKER_SA_EMAIL`, `GCP_PROJECT_ID`, and `CLOUD_TASKS_LOCATION`
+are all wired automatically as real Terraform resource references
+(`locals.api_env` in `cloud_run.tf`) — nothing to do for those.
+
+## 7. Set pbl-api's real public URL for pbl-mail-service
 
 ```bash
-terraform output mail_service_url
-terraform output cloud_tasks_queue_name
-terraform output tasks_invoker_service_account_email
+terraform output api_url
 ```
 
-Add these three as real values in `variables.tf`'s `non_secret_env` default
-(or override in `terraform.tfvars`) as `CLOUD_TASKS_MAIL_SERVICE_URL`,
-`CLOUD_TASKS_QUEUE_NAME`, `CLOUD_TASKS_INVOKER_SA_EMAIL` — pbl-api's own
-`.env`/config (pbl-api repo, Task 16) reads these exact names. Then:
+Set this as `API_PUBLIC_URL` in `variables.tf`'s `mail_non_secret_env`
+default (replacing the `CHANGE_ME` placeholder), or override it in
+`terraform.tfvars`. Then:
 
 ```bash
 terraform apply
