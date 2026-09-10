@@ -1,125 +1,168 @@
-# Deploying pbl-api + pbl-mail-service to Cloud Run
+# Deploying pbl-api + pbl-mail-service to Render
 
-Architecture: two Cloud Run v2 services, both scale-to-zero
-(`min_instance_count = 0` — genuinely free-tier friendly, no always-on
-worker cost). `pbl-api` handles public HTTP traffic and, when it needs to
-send a verification email, creates a **Google Cloud Task** targeting
-`pbl-mail-service`'s `/tasks/email-verification` endpoint. Cloud Tasks
-pushes over HTTP with an OIDC identity token — `pbl-mail-service` never
-needs to sit and listen on a persistent queue connection, which is why it
-can scale to zero too.
+This is a **runbook, not Terraform** — Render's Free plan for web services
+cannot be provisioned through any API or IaC tool (Terraform, `render.yaml`
+Blueprints, none of it — it's dashboard-only by design, presumably an
+anti-abuse measure). Everything below is a one-time manual setup; ongoing
+deploys are automated via GitHub Actions + a Render deploy hook (see
+step 8).
 
-Database: **Neon** (serverless Postgres). Cache: **Upstash** (serverless
-Redis — used by pbl-api's `CacheModule` only; no longer used for the email
-queue). Email: **Resend**. CI/CD: **GitHub Actions** via Workload Identity
-Federation (no long-lived JSON key).
+## Architecture
+
+Two Render web services, both Free plan (spins down after 15 min idle,
+~1 min cold start on the next request — this is Render's own scale-to-zero
+equivalent, not something this repo configures).
+
+- **pbl-api** — public HTTP API. When it needs to send a verification
+  email, it publishes a message to **Upstash QStash**, which pushes it to
+  pbl-mail-service over HTTP.
+- **pbl-mail-service** — owns templates, renders them, sends via
+  **Resend**. Its `/tasks/email-verification` endpoint verifies every
+  request actually came from QStash (via QStash's signed
+  `Upstash-Signature` header) before doing anything — there's no
+  Cloud-Run-style network-level IAM to lean on here, so the app verifies
+  the signature itself.
+
+Database: **Neon** (serverless Postgres). Cache: **Upstash Redis** (used by
+pbl-api's `CacheModule` only). Email: **Resend**. Queue: **Upstash QStash**.
+Monitoring: **observe.nestjs.com**, same project, two `serviceId`s.
+CI/CD: **GitHub Actions**, gated on tests passing, triggering a Render
+deploy hook.
 
 ## 1. Provision Neon
 
 Create a project at neon.tech (free tier: 500MB, autosuspends when idle).
 Note host/database/username/password.
 
-## 2. Provision Upstash
+## 2. Provision Upstash Redis
 
 Create a Redis database at upstash.com (free tier: 256MB, TLS). Use the
 TCP connection details, not the REST API.
 
-## 3. Provision Resend
+## 3. Provision Upstash QStash
+
+Same Upstash account as step 2 — go to the **QStash** tab. No separate
+signup, no credit card. Note:
+
+- The QStash **token** (pbl-api uses this to publish messages).
+- The **current signing key** and **next signing key** (pbl-mail-service
+  uses these to verify incoming requests actually came from QStash).
+
+## 4. Provision Resend
 
 Create an account at resend.com (free tier: 100/day, 3000/mo), verify a
-sending domain (or use their onboarding test domain for now), grab an API
-key.
+sending domain (or use their onboarding test domain — `onboarding@resend.dev`
+— for now). Note the API key.
 
-## 4. Create the GCP project
+## 5. observe.nestjs.com
 
-```bash
-gcloud auth login
-gcloud projects create pbl-api-<something-unique>
-gcloud config set project pbl-api-<something-unique>
-gcloud billing projects link pbl-api-<something-unique> --billing-account=<BILLING_ACCOUNT_ID>
-```
+Same project you already set up earlier — note the app key/app secret
+(shared by both services, distinguished by `serviceId`).
 
-## 5. First Terraform apply
+## 6. Push both repos to GitHub
 
-```bash
-cd pbl-infra
-cp terraform.tfvars.example terraform.tfvars
-# edit terraform.tfvars: project_id, api_github_owner/repo,
-# mail_github_owner/repo, and non_secret_env/mail_non_secret_env overrides
-# for DATABASE_HOST/USERNAME/NAME, REDIS_HOST from steps 1-2.
+Render deploys by connecting directly to a GitHub repo (it builds the
+Docker image itself from your `Dockerfile` on every push) — this is
+different from the old Cloud Run design, which pushed a pre-built image to
+a registry. Create a GitHub repo for each of `pbl-api` and
+`pbl-mail-service` and push.
 
-terraform init
-terraform apply
-```
+## 7. Create the Render web services
 
-This creates the Artifact Registry repo, both Cloud Run services (with
-placeholder images — nothing's been pushed yet, so they'll fail to start;
-that's expected at this point), the Cloud Tasks queue, the OIDC invoker
-service account, both deployer service accounts, and empty Secret Manager
-containers.
+Create **pbl-mail-service first** — pbl-api needs its URL, but
+pbl-mail-service only needs its own URL (known immediately after
+creation), so this ordering avoids a circular wait.
 
-## 6. Fill in the real secrets
+For each service, in the Render dashboard: **New → Web Service** → connect
+the GitHub repo → **Runtime: Docker** → **Plan: Free** → pick a region →
+under **Advanced**, turn **Auto-Deploy OFF** (deploys are gated by GitHub
+Actions instead — see step 8) → set the environment variables below → Create.
 
-```bash
-echo -n "<neon-password>"                 | gcloud secrets versions add DATABASE_PASSWORD --data-file=-
-echo -n "<upstash-password>"              | gcloud secrets versions add REDIS_PASSWORD --data-file=-
-echo -n "<resend-api-key>"                | gcloud secrets versions add RESEND_API_KEY --data-file=-
-echo -n "<observe.nestjs.com app key>"    | gcloud secrets versions add OBSERVE_APP_KEY --data-file=-
-echo -n "<observe.nestjs.com app secret>" | gcloud secrets versions add OBSERVE_APP_SECRET --data-file=-
-openssl rand -base64 32 | tr -d '\n'      | gcloud secrets versions add AUTH_JWT_SECRET --data-file=-
-openssl rand -base64 32 | tr -d '\n'      | gcloud secrets versions add AUTH_REFRESH_SECRET --data-file=-
-openssl rand -base64 32 | tr -d '\n'      | gcloud secrets versions add AUTH_FORGOT_SECRET --data-file=-
-openssl rand -base64 32 | tr -d '\n'      | gcloud secrets versions add AUTH_CONFIRM_EMAIL_SECRET --data-file=-
-```
+### pbl-mail-service environment variables
 
-### Secrets reference (single source of truth)
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `APP_NAME` | `pbl-mail-service` |
+| `APP_LOG_LEVEL` | `warn` |
+| `APP_LOG_SERVICE` | `console` |
+| `API_PUBLIC_URL` | *(pbl-api's URL — you don't have this yet; use a placeholder like `https://example.com` for now, come back after step 7's pbl-api creation and fix it)* |
+| `RESEND_API_KEY` | from step 4 |
+| `RESEND_FROM_EMAIL` | your verified sender (or `onboarding@resend.dev`) |
+| `RESEND_FROM_NAME` | `pbl-api` |
+| `QSTASH_CURRENT_SIGNING_KEY` | from step 3 |
+| `QSTASH_NEXT_SIGNING_KEY` | from step 3 |
+| `QSTASH_DESTINATION_URL` | this service's own URL + `/tasks/email-verification` — Render shows the URL once the service is created; edit this variable right after |
+| `OBSERVE_APP_KEY` | from step 5 |
+| `OBSERVE_APP_SECRET` | from step 5 |
 
-Every secret this project uses, where it comes from, and which service(s)
-actually read it. If a secret isn't in this table, something's
-undocumented — fix that rather than adding a new secret silently.
+Render sets `PORT` automatically — the app already reads it (no manual wiring needed).
 
-| Secret (Secret Manager name) | Consumed by | Where the value comes from |
-|---|---|---|
-| `DATABASE_PASSWORD` | pbl-api | Neon project dashboard (step 1) |
-| `REDIS_PASSWORD` | pbl-api | Upstash database dashboard (step 2) |
-| `RESEND_API_KEY` | pbl-mail-service | Resend dashboard → API Keys (step 3) |
-| `OBSERVE_APP_KEY` | pbl-api, pbl-mail-service (same value, both services) | observe.nestjs.com project → Add API key |
-| `OBSERVE_APP_SECRET` | pbl-api, pbl-mail-service (same value, both services) | observe.nestjs.com project → Add API key |
-| `AUTH_JWT_SECRET` | pbl-api | Generated (`openssl rand -base64 32`) — not from any external dashboard |
-| `AUTH_REFRESH_SECRET` | pbl-api | Generated |
-| `AUTH_FORGOT_SECRET` | pbl-api | Generated |
-| `AUTH_CONFIRM_EMAIL_SECRET` | pbl-api | Generated |
+### pbl-api environment variables
 
-Non-secret config that still needs a real value (set via `terraform.tfvars`'
-`non_secret_env`/`mail_non_secret_env` overrides, not Secret Manager):
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `APP_NAME` | `pbl-api` |
+| `APP_DEBUG` | `false` |
+| `API_PREFIX` | `api` |
+| `APP_FALLBACK_LANGUAGE` | `en` |
+| `APP_LOG_LEVEL` | `warn` |
+| `APP_LOG_SERVICE` | `console` |
+| `APP_CORS_ORIGIN` | `false` (or your real frontend origin once you have one) |
+| `DATABASE_TYPE` | `postgres` |
+| `DATABASE_HOST` / `DATABASE_USERNAME` / `DATABASE_NAME` | from step 1 |
+| `DATABASE_PASSWORD` | from step 1 |
+| `DATABASE_PORT` | `5432` |
+| `DATABASE_LOGGING` | `false` |
+| `DATABASE_SYNCHRONIZE` | `false` |
+| `DATABASE_MAX_CONNECTIONS` | `10` |
+| `DATABASE_SSL_ENABLED` | `true` |
+| `DATABASE_REJECT_UNAUTHORIZED` | `true` |
+| `REDIS_HOST` | from step 2 |
+| `REDIS_PORT` | from step 2 |
+| `REDIS_PASSWORD` | from step 2 |
+| `REDIS_TLS_ENABLED` | `true` |
+| `QSTASH_TOKEN` | from step 3 |
+| `MAIL_SERVICE_URL` | pbl-mail-service's URL (from step 7 above — this one you already have) |
+| `OBSERVE_APP_KEY` | from step 5 |
+| `OBSERVE_APP_SECRET` | from step 5 |
+| `AUTH_JWT_SECRET` / `AUTH_REFRESH_SECRET` / `AUTH_FORGOT_SECRET` / `AUTH_CONFIRM_EMAIL_SECRET` | `openssl rand -base64 32` each, four separate values |
+| `AUTH_JWT_TOKEN_EXPIRES_IN` | `1d` |
+| `AUTH_REFRESH_TOKEN_EXPIRES_IN` | `365d` |
+| `AUTH_FORGOT_TOKEN_EXPIRES_IN` | `7d` |
+| `AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN` | `1d` |
 
-| Variable | Consumed by | Where the value comes from |
-|---|---|---|
-| `DATABASE_HOST`/`DATABASE_USERNAME`/`DATABASE_NAME` | pbl-api | Neon project dashboard |
-| `REDIS_HOST` | pbl-api | Upstash database dashboard |
-| `RESEND_FROM_EMAIL`/`RESEND_FROM_NAME` | pbl-mail-service | Whatever sending identity you verified in Resend |
-| `API_PUBLIC_URL` | pbl-mail-service | `terraform output api_url` after the first apply (step 7 below) — can't be wired automatically (would create a Terraform dependency cycle with pbl-api's `CLOUD_TASKS_MAIL_SERVICE_URL`), so it must be set manually |
+### Go back and fix pbl-mail-service's `API_PUBLIC_URL`
 
-`CLOUD_TASKS_MAIL_SERVICE_URL`, `CLOUD_TASKS_QUEUE_NAME`,
-`CLOUD_TASKS_INVOKER_SA_EMAIL`, `GCP_PROJECT_ID`, and `CLOUD_TASKS_LOCATION`
-are all wired automatically as real Terraform resource references
-(`locals.api_env` in `cloud_run.tf`) — nothing to do for those.
+Now that pbl-api has a real URL, edit pbl-mail-service's `API_PUBLIC_URL`
+env var to point at it (Render redeploys automatically when you change an
+env var, even with Auto-Deploy off for git pushes).
 
-## 7. Set pbl-api's real public URL for pbl-mail-service
+## 8. Wire up GitHub Actions (CI-gated deploys)
 
-```bash
-terraform output api_url
-```
+Each service has a **Deploy Hook URL** under its Render dashboard →
+Settings. It's a bearer-token-like secret — a plain `POST` to it triggers a
+deploy of the latest commit on the connected branch.
 
-Set this as `API_PUBLIC_URL` in `variables.tf`'s `mail_non_secret_env`
-default (replacing the `CHANGE_ME` placeholder), or override it in
-`terraform.tfvars`. Then:
+In **each** repo (pbl-api, pbl-mail-service), go to **Settings → Secrets
+and variables → Actions → Secrets** (not Variables — this one's sensitive)
+and add:
 
-```bash
-terraform apply
-```
+| Secret | Value |
+|---|---|
+| `RENDER_DEPLOY_HOOK_URL` | that service's Deploy Hook URL |
 
-## 8. Run the initial migration against Neon
+Also create a GitHub **environment** named `production` in both repos (the
+`deploy.yml` workflow targets it — lets you require manual approval there
+if you want).
+
+Push to `main` and `.github/workflows/deploy.yml` runs lint/build/test,
+then calls the deploy hook only if everything passed — Render's own
+auto-deploy-on-push is intentionally left off so untested code can't reach
+production.
+
+## 9. Run the initial migration against Neon
 
 ```bash
 pnpm migration:up
@@ -127,63 +170,56 @@ pnpm migration:up
 
 (from the pbl-api repo, with Neon credentials in a local `.env`.)
 
-## 9. Push real images
+## Secrets reference (single source of truth)
 
-Push to `main` in both `pbl-api` and `pbl-mail-service` — their own
-`deploy.yml` builds and pushes their own image and updates only their own
-Cloud Run service.
-
-## 10. Wire up GitHub Actions
-
-`terraform apply` printed `workload_identity_provider`,
-`api_deployer_service_account_email`, `mail_deployer_service_account_email`.
-In **each** app repo, go to **Settings → Secrets and variables → Actions →
-Variables** and add:
-
-| Variable | pbl-api value | pbl-mail-service value |
+| Secret | Consumed by | Where the value comes from |
 |---|---|---|
-| `GCP_PROJECT_ID` | your project id | your project id |
-| `GCP_REGION` | `asia-southeast1` | `asia-southeast1` |
-| `GCP_ARTIFACT_REPO` | `pbl-api` | `pbl-api` (same repo, different image name) |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | terraform output `workload_identity_provider` | same value |
-| `GCP_DEPLOYER_SA_EMAIL` | terraform output `api_deployer_service_account_email` | terraform output `mail_deployer_service_account_email` |
-| `GCP_API_SERVICE_NAME` | `pbl-api` | — |
-| `GCP_MAIL_SERVICE_NAME` | — | `pbl-mail-service` |
+| `DATABASE_PASSWORD` | pbl-api | Neon dashboard (step 1) |
+| `REDIS_PASSWORD` | pbl-api | Upstash Redis dashboard (step 2) |
+| `QSTASH_TOKEN` | pbl-api | Upstash QStash tab (step 3) |
+| `QSTASH_CURRENT_SIGNING_KEY` / `QSTASH_NEXT_SIGNING_KEY` | pbl-mail-service | Upstash QStash tab (step 3) |
+| `RESEND_API_KEY` | pbl-mail-service | Resend dashboard (step 4) |
+| `OBSERVE_APP_KEY` / `OBSERVE_APP_SECRET` | pbl-api, pbl-mail-service (same value, both services) | observe.nestjs.com project |
+| `AUTH_JWT_SECRET` / `AUTH_REFRESH_SECRET` / `AUTH_FORGOT_SECRET` / `AUTH_CONFIRM_EMAIL_SECRET` | pbl-api | Generated (`openssl rand -base64 32`) |
+| `RENDER_DEPLOY_HOOK_URL` | GitHub Actions (per repo) | That service's Render dashboard → Settings → Deploy Hook |
 
-Also create a GitHub **environment** named `production` in both repos.
+If a secret isn't in this table, something's undocumented — fix that
+rather than adding a new one silently.
 
 ## Verifying monitoring survived the split
 
-Both `pbl-api` and `pbl-mail-service` call `createObserveModule()` in their
-own `app.module.ts`, using the *same* `OBSERVE_APP_KEY`/`OBSERVE_APP_SECRET`
-secret but a distinct `serviceId` (`'pbl-api'` vs `'pbl-mail-service'`).
-After deploying both:
+Both `pbl-api` and `pbl-mail-service` call `createObserveModule()` in
+their own `app.module.ts`, using the *same* `OBSERVE_APP_KEY`/
+`OBSERVE_APP_SECRET` secret but a distinct `serviceId` (`'pbl-api'` vs
+`'pbl-mail-service'`). After deploying both:
 
 1. Open the observe.nestjs.com dashboard.
-2. Hit pbl-api's public URL, confirm requests show up under `pbl-api`.
-3. Register a user through pbl-api's `/api/auth/email/register` — confirm
-   the `/tasks/email-verification` call shows up under `pbl-mail-service`,
-   and confirm the email actually arrives (check Resend's own delivery log
-   too).
+2. Hit pbl-api's public URL (it may take ~1 min to cold-start first),
+   confirm requests show up under `pbl-api`.
+3. Register a user through pbl-api's `/api/v1/auth/email/register` —
+   confirm the `/tasks/email-verification` call shows up under
+   `pbl-mail-service`, and confirm the email actually arrives (check
+   Resend's own delivery log too, and QStash's own dashboard for delivery
+   status/retries).
 4. There is no automatic trace-id propagation from the request that
-   created the Cloud Task to the HTTP call Cloud Tasks makes to
+   published the QStash message to the HTTP call QStash makes to
    pbl-mail-service — Observe traces each service's own HTTP handling, but
-   correlating "this request → this task → this email" across services
-   isn't wired up by anything in this plan. Cloud Tasks does add its own
-   `X-CloudTasks-*` headers to the forwarded request if you want to build
-   that correlation yourself later.
+   correlating "this request → this message → this email" across services
+   isn't wired up here. Treat as a follow-up if you need it.
 
 ## Notes / things to revisit later
 
-- **State is local** — no GCP project existed when this was written. Once
-  you have one, create a GCS bucket and switch `versions.tf`'s backend,
-  then `terraform init -migrate-state`.
-- Both services are genuinely scale-to-zero now — no always-on cost from
-  the app layer. Neon and Upstash both auto-suspend/are pay-per-request on
-  their free tiers too, so the only guaranteed non-zero cost here is
-  whatever GCP charges for the Cloud Tasks queue itself at low volume
-  (check current Cloud Tasks pricing — it has its own free tier separate
-  from Cloud Run's) and the Artifact Registry storage for images.
-- Cold starts apply to both services now (previously only pbl-api) — the
-  first email after an idle period pays pbl-mail-service's cold-start cost
-  in addition to pbl-api's.
+- **Cold starts apply to both services** on Render's Free plan (spin-down
+  after 15 min idle, ~1 min to wake). If pbl-api and pbl-mail-service are
+  both asleep, a registration request pays both cold-start costs (pbl-api
+  waking to handle the request, then QStash retrying its push to
+  pbl-mail-service until it wakes too — QStash retries on failure, so this
+  should still eventually succeed, just slower than a warm request).
+- **Free Postgres on some providers expires after a fixed period** — this
+  doesn't apply here since the database is on Neon, not Render, but if you
+  ever add a Render-hosted database, check its own free-tier expiry terms
+  separately.
+- If you outgrow Render's Free plan, the official Render Terraform
+  provider (`render-oss/render`) exists and is early-access — but paid
+  plans, unlike Free, likely *can* be provisioned through it. Revisit
+  Terraform then if it's worth it.
