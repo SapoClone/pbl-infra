@@ -9,11 +9,15 @@ data "aws_iam_policy_document" "pbl_api_task" {
 module "pbl_api" {
   source = "./modules/ecs_service"
 
-  name               = "pbl-api"
-  vpc_id             = data.aws_vpc.default.id
-  subnet_ids         = data.aws_subnets.default.ids
-  container_port     = 3000
-  health_check_path  = "/api/health"
+  name           = "pbl-api"
+  vpc_id         = data.aws_vpc.default.id
+  subnet_ids     = data.aws_subnets.default.ids
+  container_port = 3000
+  # pbl-api's main.ts excludes "health" from the global "api" prefix
+  # (setGlobalPrefix's exclude list), so the real route is /health, not
+  # /api/health — the latter 404s, which the ALB health check took as
+  # "unhealthy" and deregistered the target over.
+  health_check_path  = "/health"
   cpu                = 256
   memory             = 512
   desired_count      = 1
