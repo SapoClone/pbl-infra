@@ -51,10 +51,17 @@ data "aws_iam_policy_document" "pbl_api_deployer" {
   }
 
   statement {
-    sid       = "PassTaskRoles"
-    effect    = "Allow"
-    actions   = ["iam:PassRole"]
-    resources = [module.pbl_api.task_role_arn]
+    sid     = "PassTaskRoles"
+    effect  = "Allow"
+    actions = ["iam:PassRole"]
+    # RegisterTaskDefinition needs PassRole on BOTH roles the task
+    # definition references — the task role (app runtime permissions) and
+    # the execution role (ECS agent's own image-pull/log-push permissions)
+    # — not just the one the app code actually uses.
+    resources = [
+      module.pbl_api.task_role_arn,
+      module.pbl_api.execution_role_arn,
+    ]
   }
 }
 
