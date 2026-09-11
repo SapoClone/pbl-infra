@@ -171,7 +171,7 @@ a shared secret) and add:
 |---|---|
 | `AWS_DEPLOYER_ROLE_ARN` | `pbl_api_deployer_role_arn` output |
 | `AWS_REGION` | your region, e.g. `ap-southeast-1` |
-| `AWS_ECR_REPOSITORY` | `pbl_api_ecr_url` output |
+| `AWS_ECR_REPOSITORY` | `pbl_api_ecr_name` output |
 | `AWS_ECS_CLUSTER` | `pbl_api_ecs_cluster` output |
 | `AWS_ECS_SERVICE` | `pbl_api_ecs_service` output |
 | `AWS_ECS_TASK_FAMILY` | `pbl_api_ecs_task_family` output |
@@ -182,7 +182,7 @@ a shared secret) and add:
 |---|---|
 | `AWS_DEPLOYER_ROLE_ARN` | `pbl_mail_service_deployer_role_arn` output |
 | `AWS_REGION` | your region |
-| `AWS_ECR_REPOSITORY` | `pbl_mail_service_ecr_url` output |
+| `AWS_ECR_REPOSITORY` | `pbl_mail_service_ecr_name` output |
 | `AWS_LAMBDA_FUNCTION_NAME` | `pbl_mail_service_lambda_function_name` output |
 
 Also create a GitHub **environment** named `production` in both repos

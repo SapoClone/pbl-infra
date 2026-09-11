@@ -3,11 +3,23 @@ output "pbl_api_url" {
 }
 
 output "pbl_api_ecr_url" {
-  value = module.pbl_api_ecr.url
+  description = "Full repository URL (registry + name) — for reference, not what deploy.yml's AWS_ECR_REPOSITORY variable wants."
+  value       = module.pbl_api_ecr.url
+}
+
+output "pbl_api_ecr_name" {
+  description = "Bare repository name. Set as the AWS_ECR_REPOSITORY repo variable in pbl-api — deploy.yml concatenates this with the registry hostname itself, so the full URL here would duplicate it."
+  value       = module.pbl_api_ecr.name
 }
 
 output "pbl_mail_service_ecr_url" {
-  value = module.pbl_mail_service_ecr.url
+  description = "Full repository URL (registry + name) — for reference, not what deploy.yml's AWS_ECR_REPOSITORY variable wants."
+  value       = module.pbl_mail_service_ecr.url
+}
+
+output "pbl_mail_service_ecr_name" {
+  description = "Bare repository name. Set as the AWS_ECR_REPOSITORY repo variable in pbl-mail-service — same reasoning as pbl_api_ecr_name."
+  value       = module.pbl_mail_service_ecr.name
 }
 
 output "email_verification_queue_url" {
