@@ -16,5 +16,5 @@ terraform {
 }
 
 inputs = {
-  github_owner = "your-github-username-or-org" # replace with the real owner
+  github_owner = "SapoClone"
 }
