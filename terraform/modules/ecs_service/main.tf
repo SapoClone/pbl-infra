@@ -187,12 +187,20 @@ resource "aws_ecs_task_definition" "this" {
     }
   ])
 
-  lifecycle {
-    # The deploy workflow registers new task definition revisions directly
-    # (see pbl-api's deploy.yml) — ignoring this here means `terraform
-    # apply` won't fight CI over the image tag / revision in use.
-    ignore_changes = [container_definitions]
-  }
+  # No lifecycle.ignore_changes here (on purpose, despite what an earlier
+  # version of this comment said): container_definitions is a single JSON
+  # string — ignoring the whole attribute to dodge fighting CI over the
+  # image tag also silently ignored every other change inside it,
+  # including new environment/secrets entries added here, which then
+  # never reached AWS no matter how many times `apply` ran. The actual
+  # fix is on aws_ecs_service.this below: it ignores *its own*
+  # task_definition, so the running service keeps whatever revision CI
+  # last deployed regardless of what revision Terraform creates here.
+  # Terraform is free to register new revisions (with this module's
+  # bootstrap/placeholder image, real env/secrets) — CI's own
+  # describe-task-definition + swap-image step reads whatever revision is
+  # latest, so it inherits Terraform's env/secrets changes and overwrites
+  # only the image, the next time it deploys.
 }
 
 resource "aws_ecs_service" "this" {
