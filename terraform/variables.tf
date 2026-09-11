@@ -89,6 +89,20 @@ variable "auth_confirm_email_secret" {
   sensitive = true
 }
 
+# --- pbl-api: Swagger (/api-docs) ---------------------------------------
+# Exposes Swagger outside development, behind HTTP Basic Auth, so frontend
+# devs have a live reference without needing to run pbl-api locally.
+
+variable "swagger_user" {
+  type      = string
+  sensitive = true
+}
+
+variable "swagger_password" {
+  type      = string
+  sensitive = true
+}
+
 # --- pbl-mail-service: Resend ------------------------------------------
 
 variable "resend_api_key" {

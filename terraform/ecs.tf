@@ -54,6 +54,7 @@ module "pbl_api" {
     AUTH_REFRESH_TOKEN_EXPIRES_IN       = "365d"
     AUTH_FORGOT_TOKEN_EXPIRES_IN        = "7d"
     AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN = "1d"
+    APP_SWAGGER_ENABLED                 = "true"
   }
 
   secrets = {
@@ -65,5 +66,7 @@ module "pbl_api" {
     AUTH_CONFIRM_EMAIL_SECRET = aws_ssm_parameter.pbl_api["AUTH_CONFIRM_EMAIL_SECRET"].arn
     OBSERVE_APP_KEY           = aws_ssm_parameter.pbl_api["OBSERVE_APP_KEY"].arn
     OBSERVE_APP_SECRET        = aws_ssm_parameter.pbl_api["OBSERVE_APP_SECRET"].arn
+    APP_SWAGGER_USER          = aws_ssm_parameter.pbl_api["APP_SWAGGER_USER"].arn
+    APP_SWAGGER_PASSWORD      = aws_ssm_parameter.pbl_api["APP_SWAGGER_PASSWORD"].arn
   }
 }

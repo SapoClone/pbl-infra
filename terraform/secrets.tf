@@ -20,6 +20,8 @@ locals {
     AUTH_CONFIRM_EMAIL_SECRET = var.auth_confirm_email_secret
     OBSERVE_APP_KEY           = var.observe_app_key
     OBSERVE_APP_SECRET        = var.observe_app_secret
+    APP_SWAGGER_USER          = var.swagger_user
+    APP_SWAGGER_PASSWORD      = var.swagger_password
   }
 }
 
