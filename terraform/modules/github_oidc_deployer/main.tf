@@ -14,16 +14,20 @@ data "aws_iam_policy_document" "trust" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Deploy workflows only ever run on pushes to main (or a manual
-    # workflow_dispatch off main) — GitHub's sub claim is the same
-    # "repo:<owner>/<repo>:ref:refs/heads/main" shape for both, so this one
-    # condition covers everything deploy.yml actually triggers on. A PR
-    # from a fork, or a push to any other branch, gets a different sub and
-    # is refused.
+    # A job that targets a GitHub environment (deploy.yml sets
+    # `environment: production`) gets an environment-scoped sub claim
+    # ("repo:<owner>/<repo>:environment:production") INSTEAD of the
+    # ref-scoped one ("repo:<owner>/<repo>:ref:refs/heads/main") — GitHub
+    # only sends one or the other, never both. StringEquals against a list
+    # matches if any value matches, so both shapes are accepted here
+    # rather than guessing which one applies.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main"]
+      values = [
+        "repo:${var.github_repo}:ref:refs/heads/main",
+        "repo:${var.github_repo}:environment:production",
+      ]
     }
   }
 }
