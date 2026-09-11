@@ -1,7 +1,25 @@
 # pbl-infra — AWS deployment for pbl-api + pbl-mail-service
 
-Terraform-managed AWS infrastructure, backed by AWS Activate/education/promo
-credits.
+Terraform-managed AWS infrastructure, run through Terragrunt, backed by AWS
+Activate/education/promo credits.
+
+## Layout
+
+```
+pbl-infra/
+├── root.hcl                 # root: S3 backend (auto-bootstrapping) + provider, shared by every env
+├── terraform/               # the actual Terraform module — never applied directly, only via Terragrunt
+│   ├── modules/              # ecr_repository, ecs_service, lambda_sqs_consumer, sqs_queue, github_oidc_deployer
+│   └── *.tf
+└── live/
+    └── prod/
+        ├── terragrunt.hcl              # includes root, points source at ../../terraform, sets non-secret inputs
+        └── secrets.tfvars.example      # copy to secrets.tfvars (gitignored) and fill in
+```
+
+Adding another environment later (e.g. `live/staging/`) means copying
+`live/prod/` and adjusting inputs — the backend and provider config stay
+defined exactly once, in the root `root.hcl`.
 
 ## Architecture
 
@@ -25,8 +43,8 @@ credits.
   lint/build/test passing.
 - **Secrets**: AWS SSM Parameter Store (`SecureString`), for pbl-api's ECS
   task definition. Terraform is the source of truth for which secrets
-  exist; values come from `terraform.tfvars` (gitignored, never committed)
-  or `TF_VAR_*` environment variables.
+  exist; values come from `live/prod/secrets.tfvars` (gitignored, never
+  committed).
 
 ```
 GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (OIDC) ──push──▶ ECR (pbl-mail-service)
@@ -42,6 +60,7 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
 
 - An AWS account with the Activate/education/promo credit balance applied.
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.5.
+- [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) >= 0.55.
 - The [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html),
   configured with credentials that can create IAM roles, ECS/ALB/Lambda/SQS
   resources (an account-root or admin-equivalent principal, for this
@@ -64,23 +83,27 @@ provision them by hand once:
 4. **observe.nestjs.com** — the project you already set up. Note the app
    key/app secret (shared by both services, distinguished by `serviceId`).
 
-## 2. Configure Terraform variables
+## 2. Configure variables
 
 ```bash
-cp terraform.tfvars.example terraform.tfvars
+cd live/prod
+cp secrets.tfvars.example secrets.tfvars
 ```
 
-Fill in every value — `terraform.tfvars` is gitignored, so this file
-itself never leaves your machine. (Alternatively, skip the file and export
-`TF_VAR_<name>` for each one, e.g. in a password-manager-backed shell
-profile.)
-
-`github_owner` is your GitHub username/org — the deployer IAM roles trust
-`repo:<github_owner>/pbl-api:ref:refs/heads/main` and the equivalent for
-pbl-mail-service, so this has to be exact.
+Fill in every value in `secrets.tfvars` — it's gitignored, so it never
+leaves your machine. Then open `live/prod/terragrunt.hcl` and set
+`github_owner` to your real GitHub username/org (not a secret, so it's a
+plain `inputs` value there rather than in `secrets.tfvars`) — the deployer
+IAM roles trust `repo:<github_owner>/pbl-api:ref:refs/heads/main` and the
+equivalent for pbl-mail-service, so this has to be exact.
 
 For the four `auth_*_secret` values: `openssl rand -base64 32`, run four
 separate times.
+
+All commands from here on run from `live/prod/`, using `terragrunt`
+instead of `terraform` directly (it wraps every `terraform` subcommand —
+`terragrunt plan`, `terragrunt apply`, etc. — injecting the backend,
+provider, and `secrets.tfvars` automatically).
 
 ## 3. First-time bootstrap: push a placeholder image to each ECR repo
 
@@ -90,17 +113,23 @@ and the Lambda function — so an empty repo makes the very first `apply`
 fail. Two-step bootstrap:
 
 ```bash
-# Create just the ECR repositories first
-terraform init
-terraform apply -target=module.pbl_api_ecr -target=module.pbl_mail_service_ecr
+cd live/prod
+
+# The very first run in a new AWS account needs the S3 state bucket +
+# DynamoDB lock table to exist (see root.hcl's remote_state block) —
+# --backend-bootstrap creates them automatically instead of you doing it
+# by hand. Only needed once; every later `terragrunt` command finds them
+# already there.
+terragrunt init --backend-bootstrap
+terragrunt apply -target=module.pbl_api_ecr -target=module.pbl_mail_service_ecr
 
 # Log in, then push each repo's own Dockerfile once, tagged "bootstrap"
 # (the default the variables below expect — see pbl_api_bootstrap_image_tag
-# / pbl_mail_service_bootstrap_image_tag in variables.tf)
+# / pbl_mail_service_bootstrap_image_tag in terraform/variables.tf)
 aws ecr get-login-password --region <your-region> | \
   docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
 
-cd ../pbl-api
+cd ../../../pbl-api
 docker build --target production -t <account-id>.dkr.ecr.<region>.amazonaws.com/pbl-api:bootstrap .
 docker push <account-id>.dkr.ecr.<region>.amazonaws.com/pbl-api:bootstrap
 
@@ -112,8 +141,8 @@ docker push <account-id>.dkr.ecr.<region>.amazonaws.com/pbl-mail-service:bootstr
 ## 4. Apply everything else
 
 ```bash
-cd ../pbl-infra
-terraform apply
+cd ../pbl-infra/live/prod
+terragrunt apply
 ```
 
 Review the plan before confirming — it creates ~39 resources (ECS cluster
@@ -220,10 +249,12 @@ After deploying both:
 - **No autoscaling** — `desired_count = 1` (see `ecs.tf`), a fixed single
   task. Fine for low traffic; revisit with an `aws_appautoscaling_target`
   if that changes.
-- **Local state** — `providers.tf` uses local Terraform state by default.
-  Fine solo; switch to an S3 backend (with a DynamoDB lock table) before
-  more than one person runs `terraform apply` against this, or concurrent
-  runs will corrupt each other's state.
+- **State is already remote** — the root `root.hcl` puts it in S3
+  with a DynamoDB lock table, auto-created on first run. Safe for more
+  than one person to `terragrunt apply` against (locking prevents
+  concurrent runs from corrupting state), though nothing here restricts
+  *who* can — that's an IAM-policy concern on the bucket/table if this
+  ever needs it.
 - **DLQ has no alerting** — failed SQS messages land in
   `email-verification-dlq` after 3 delivery attempts, but nothing pages
   you when that happens. A CloudWatch alarm on

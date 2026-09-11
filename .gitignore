@@ -1,11 +1,17 @@
 .terraform/
+.terragrunt-cache/
 *.tfstate
 *.tfstate.*
 *.tfvars
-!terraform.tfvars.example
+!*.tfvars.example
 crash.log
 crash.*.log
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Terragrunt-generated files — regenerated on every run from
+# terragrunt.hcl, never hand-edited, never committed.
+backend.tf
+provider.tf
