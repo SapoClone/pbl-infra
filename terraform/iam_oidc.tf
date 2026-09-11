@@ -91,9 +91,16 @@ data "aws_iam_policy_document" "pbl_mail_service_deployer" {
   }
 
   statement {
-    sid       = "LambdaDeploy"
-    effect    = "Allow"
-    actions   = ["lambda:UpdateFunctionCode", "lambda:GetFunction"]
+    sid    = "LambdaDeploy"
+    effect = "Allow"
+    actions = [
+      "lambda:UpdateFunctionCode",
+      "lambda:GetFunction",
+      # Used by `aws lambda wait function-updated` in deploy.yml to poll
+      # deployment status — a separate action from GetFunction, easy to
+      # miss since both look interchangeable from the CLI's perspective.
+      "lambda:GetFunctionConfiguration",
+    ]
     resources = [module.pbl_mail_service.function_arn]
   }
 }
