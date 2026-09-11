@@ -1,0 +1,31 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values, or export
+# each as TF_VAR_<name> instead of writing them to disk at all.
+
+aws_region   = "ap-southeast-1"
+github_owner = "your-github-username-or-org"
+
+# --- observe.nestjs.com ---
+observe_app_key    = ""
+observe_app_secret = ""
+
+# --- Neon Postgres ---
+database_host     = ""
+database_username = ""
+database_password = ""
+database_name     = ""
+
+# --- Upstash Redis ---
+redis_host     = ""
+redis_port     = 6379
+redis_password = ""
+
+# --- pbl-api auth secrets (openssl rand -base64 32, four separate values) ---
+auth_jwt_secret           = ""
+auth_refresh_secret       = ""
+auth_forgot_secret        = ""
+auth_confirm_email_secret = ""
+
+# --- Resend ---
+resend_api_key    = ""
+resend_from_email = "onboarding@resend.dev"
+resend_from_name  = "pbl-api"
