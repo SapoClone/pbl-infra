@@ -4,6 +4,12 @@ data "aws_iam_policy_document" "pbl_api_task" {
     actions   = ["sqs:SendMessage"]
     resources = [module.email_verification_queue.arn]
   }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.images.arn}/*"]
+  }
 }
 
 module "pbl_api" {
@@ -51,6 +57,9 @@ module "pbl_api" {
     REDIS_TLS_ENABLED                   = "true"
     SQS_QUEUE_URL                       = module.email_verification_queue.url
     AWS_REGION                          = var.aws_region
+    AWS_S3_BUCKET                       = aws_s3_bucket.images.id
+    AWS_S3_REGION                       = var.aws_region
+    CDN_URL                             = "https://static.${var.domain_name}"
     AUTH_JWT_TOKEN_EXPIRES_IN           = "1d"
     AUTH_REFRESH_TOKEN_EXPIRES_IN       = "365d"
     AUTH_FORGOT_TOKEN_EXPIRES_IN        = "7d"
