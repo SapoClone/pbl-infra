@@ -16,9 +16,9 @@ module "pbl_mail_service" {
     APP_LOG_LEVEL   = "warn"
     APP_LOG_SERVICE = "console"
     # pbl-api and pbl-mail-service are both provisioned in this same root
-    # module, so this can point straight at the ALB's live DNS name
-    # instead of a placeholder that needs manual fixing after the fact.
-    API_PUBLIC_URL     = "http://${module.pbl_api.alb_dns_name}"
+    # module, so this can point straight at pbl-api's HTTPS domain instead
+    # of a placeholder that needs manual fixing after the fact.
+    API_PUBLIC_URL     = "https://api.${var.domain_name}"
     RESEND_API_KEY     = var.resend_api_key
     RESEND_FROM_EMAIL  = var.resend_from_email
     RESEND_FROM_NAME   = var.resend_from_name

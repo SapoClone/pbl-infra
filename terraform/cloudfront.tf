@@ -24,11 +24,11 @@ resource "aws_cloudfront_distribution" "images" {
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods          = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id        = aws_s3_bucket.images.id
-    viewer_protocol_policy  = "redirect-to-https"
-    compress                = true
-    cache_policy_id         = data.aws_cloudfront_cache_policy.managed_caching_optimized.id
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = aws_s3_bucket.images.id
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+    cache_policy_id        = data.aws_cloudfront_cache_policy.managed_caching_optimized.id
   }
 
   restrictions {

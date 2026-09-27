@@ -51,7 +51,7 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
                                     │                                                      │
                                     ▼                                                      ▼
                           ECS Fargate service                                     Lambda (container image)
-                         behind an ALB (:80)                                        triggered by SQS
+                    behind an ALB (HTTPS, :80 redirects)                              triggered by SQS
                                     │                                                      ▲
                          publishes on send-mail ──────────▶ SQS queue "email-verification" ┘
 ```
@@ -182,15 +182,19 @@ next step.
 
 ## 4. Apply everything else
 
+Still in `live/prod` from the previous step:
+
 ```bash
-cd ../pbl-infra/live/prod
 terragrunt apply
 ```
 
-Review the plan before confirming — it creates ~39 resources (ECS cluster
+Review the plan before confirming — it creates ~55 resources (ECS cluster
 + ALB + service + task def + IAM roles, the Lambda function + event
 source mapping, the SQS queue + DLQ, both ECR repos, 8 SSM parameters, the
-GitHub OIDC provider + two deployer roles).
+GitHub OIDC provider + two deployer roles, the Route53 zone, the 2 ACM
+certs + their validation records, the private S3 image bucket + its 4
+config resources, the CloudFront distribution + OAC + bucket policy, and
+the 2 Route53 alias records for `api.` and `static.`).
 
 Note the outputs — `pbl_api_deployer_role_arn` and
 `pbl_mail_service_deployer_role_arn` are needed in the next step.
