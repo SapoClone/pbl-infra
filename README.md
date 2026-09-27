@@ -56,6 +56,30 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
                          publishes on send-mail ──────────▶ SQS queue "email-verification" ┘
 ```
 
+## Domain & HTTPS
+
+- `pbl-api` is reachable at `https://api.sapo.makeasy.id.vn` (HTTP on
+  port 80 redirects to HTTPS). The cert is an ACM DNS-validated
+  certificate, auto-renewed by AWS as long as the validation CNAME
+  records stay in place (Terraform manages them, so this is automatic).
+- The root domain `makeasy.id.vn` stays managed at iNet. Only the
+  `sapo.makeasy.id.vn` subdomain is delegated to Route53 — see "One-time
+  domain delegation" below. Every record under it (API, CDN, ACM
+  validation) is Terraform-managed after that; no further manual DNS
+  steps at iNet.
+
+## Image storage (S3 + CloudFront)
+
+- Images live in a private S3 bucket (`image_bucket_name` output),
+  never public directly — `pbl-api`'s ECS task role has
+  `PutObject`/`GetObject`/`DeleteObject` on it, and end users only ever
+  see `https://static.sapo.makeasy.id.vn/<key>` (CloudFront, via Origin
+  Access Control).
+- `pbl-api` gets `AWS_S3_BUCKET`, `AWS_S3_REGION`, and `CDN_URL` as
+  container env vars — wiring an actual upload endpoint (multer,
+  `@aws-sdk/client-s3`, etc.) is a `pbl-api`-side feature, not part of
+  this infra.
+
 ## Prerequisites
 
 - An AWS account with the Activate/education/promo credit balance applied.
@@ -137,6 +161,24 @@ cd ../pbl-mail-service
 docker build --target production -t <account-id>.dkr.ecr.<region>.amazonaws.com/pbl-mail-service:bootstrap .
 docker push <account-id>.dkr.ecr.<region>.amazonaws.com/pbl-mail-service:bootstrap
 ```
+
+## 3b. One-time domain delegation
+
+Before the full apply can succeed, the `sapo.makeasy.id.vn` Route53 zone
+needs to exist and be delegated from iNet — ACM's DNS validation polls
+for records under that zone to resolve publicly, which only happens
+after delegation propagates.
+
+```bash
+cd live/prod
+terragrunt apply -target=aws_route53_zone.this
+```
+
+Note the `route53_name_servers` output. In iNet's DNS panel for
+`makeasy.id.vn`, add an NS record: name `sapo`, values the 4 nameservers
+from that output. Wait for propagation — `dig NS sapo.makeasy.id.vn`
+should return them from a public resolver — before continuing to the
+next step.
 
 ## 4. Apply everything else
 
@@ -243,9 +285,6 @@ After deploying both:
 
 ## Notes / things to revisit later
 
-- **No HTTPS on the ALB yet** — it's HTTP-only on port 80. Adding a
-  domain + ACM certificate + an HTTPS listener is a natural next step
-  once you have a domain to point at it.
 - **No autoscaling** — `desired_count = 1` (see `ecs.tf`), a fixed single
   task. Fine for low traffic; revisit with an `aws_appautoscaling_target`
   if that changes.
