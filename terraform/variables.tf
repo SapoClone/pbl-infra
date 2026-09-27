@@ -136,3 +136,14 @@ variable "pbl_mail_service_bootstrap_image_tag" {
   type    = string
   default = "bootstrap"
 }
+
+# --- Domain (Route53) ---------------------------------------------------
+# Delegated subdomain — the root domain (makeasy.id.vn) stays managed at
+# iNet; this subdomain's NS records point to the Route53 zone created in
+# route53.tf, so everything under it (api.*, static.*, ACM validation) is
+# fully Terraform-managed after the one-time delegation.
+
+variable "domain_name" {
+  type    = string
+  default = "sapo.makeasy.id.vn"
+}

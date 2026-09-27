@@ -36,6 +36,14 @@ generate "provider" {
 provider "aws" {
   region = "${local.aws_region}"
 }
+
+# CloudFront's ACM certificate must be requested in us-east-1 no matter
+# which region the rest of the stack lives in — this alias exists only
+# for that certificate (see terraform/acm.tf).
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
 EOF
 }
 
