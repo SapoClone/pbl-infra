@@ -62,11 +62,14 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
   port 80 redirects to HTTPS). The cert is an ACM DNS-validated
   certificate, auto-renewed by AWS as long as the validation CNAME
   records stay in place (Terraform manages them, so this is automatic).
-- The root domain `makeasy.id.vn` stays managed at iNet. Only the
-  `sapo.makeasy.id.vn` subdomain is delegated to Route53 — see "One-time
-  domain delegation" below. Every record under it (API, CDN, ACM
-  validation) is Terraform-managed after that; no further manual DNS
-  steps at iNet.
+- The root domain `makeasy.id.vn` stays managed at iNet — its DNS panel
+  has no NS record type, so no Route53 zone hosts any part of
+  `sapo.makeasy.id.vn`. Every hostname under it (API, CDN, ACM
+  validation) is a plain CNAME you add by hand at iNet — see "3b. Add the
+  ACM validation CNAMEs" and the end of "4. Apply everything else" below
+  for exactly what to paste in. Auto-renewal still works: ACM only
+  re-validates against the same CNAME, which stays in place permanently
+  once added.
 
 ## Image storage (S3 + CloudFront)
 
@@ -162,23 +165,41 @@ docker build --target production -t <account-id>.dkr.ecr.<region>.amazonaws.com/
 docker push <account-id>.dkr.ecr.<region>.amazonaws.com/pbl-mail-service:bootstrap
 ```
 
-## 3b. One-time domain delegation
+## 3b. Add the ACM validation CNAMEs
 
-Before the full apply can succeed, the `sapo.makeasy.id.vn` Route53 zone
-needs to exist and be delegated from iNet — ACM's DNS validation polls
-for records under that zone to resolve publicly, which only happens
-after delegation propagates.
+iNet's DNS panel for `makeasy.id.vn` has no NS record type, so there's no
+way to delegate `sapo.makeasy.id.vn` to Route53 — every hostname under it
+is a plain CNAME added by hand instead. Start with the two ACM
+certificates, since the ALB and CloudFront (created in the next step)
+both need an already-validated cert:
 
 ```bash
 cd live/prod
-terragrunt apply -target=aws_route53_zone.this
+terragrunt apply -target=aws_acm_certificate.regional -target=aws_acm_certificate.us_east_1
 ```
 
-Note the `route53_name_servers` output. In iNet's DNS panel for
-`makeasy.id.vn`, add an NS record: name `sapo`, values the 4 nameservers
-from that output. Wait for propagation — `dig NS sapo.makeasy.id.vn`
-should return them from a public resolver — before continuing to the
-next step.
+Print the two CNAMEs to add and paste each into iNet's Add Record form
+(Type/Host/Value map directly onto iNet's fields):
+
+```bash
+terragrunt output -raw acm_regional_validation_cname
+terragrunt output -raw acm_us_east_1_validation_cname
+```
+
+Note: ACM's validation record values come with a trailing dot from AWS
+(e.g. `_xyz.acm-validations.aws.`) — most DNS panels accept that fine,
+but if iNet's form rejects it or double-appends one, just remove it by
+hand.
+
+Wait for propagation, then validate both certs:
+
+```bash
+terragrunt apply -target=aws_acm_certificate_validation.regional -target=aws_acm_certificate_validation.us_east_1
+```
+
+This polls AWS until it sees both CNAMEs resolve publicly and marks the
+certs ISSUED — safe to re-run if it times out before propagation
+finishes.
 
 ## 4. Apply everything else
 
@@ -188,16 +209,29 @@ Still in `live/prod` from the previous step:
 terragrunt apply
 ```
 
-Review the plan before confirming — it creates ~55 resources (ECS cluster
+Review the plan before confirming — it creates ~50 resources (ECS cluster
 + ALB + service + task def + IAM roles, the Lambda function + event
 source mapping, the SQS queue + DLQ, both ECR repos, 8 SSM parameters, the
-GitHub OIDC provider + two deployer roles, the Route53 zone, the 2 ACM
-certs + their validation records, the private S3 image bucket + its 4
-config resources, the CloudFront distribution + OAC + bucket policy, and
-the 2 Route53 alias records for `api.` and `static.`).
+GitHub OIDC provider + two deployer roles, the 2 ACM certs already
+requested in step 3b, the private S3 image bucket + its 4 config
+resources, and the CloudFront distribution + OAC + bucket policy).
 
 Note the outputs — `pbl_api_deployer_role_arn` and
 `pbl_mail_service_deployer_role_arn` are needed in the next step.
+
+Then print the last two CNAMEs and add them at iNet the same way as
+step 3b:
+
+```bash
+terragrunt output -raw pbl_api_cname
+terragrunt output -raw image_cdn_cname
+```
+
+Wait for propagation, then verify:
+
+```bash
+curl -I https://api.sapo.makeasy.id.vn/health   # expect 200
+```
 
 ## 5. Push both application repos to GitHub
 
