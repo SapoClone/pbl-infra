@@ -65,3 +65,9 @@ variable "task_role_policy_json" {
   description = "IAM policy JSON for the task role (the app's own runtime AWS permissions, e.g. SQS SendMessage)."
   type        = string
 }
+
+variable "certificate_arn" {
+  description = "ACM certificate ARN for the ALB's HTTPS listener. When null, the ALB stays HTTP-only on port 80 (today's behavior) — set once a cert exists so this module never requires a domain to apply cleanly."
+  type        = string
+  default     = null
+}
