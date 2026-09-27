@@ -60,3 +60,7 @@ output "route53_name_servers" {
   description = "Add these as an NS record for \"sapo\" in iNet's DNS panel for makeasy.id.vn — one-time delegation step."
   value       = aws_route53_zone.this.name_servers
 }
+
+output "pbl_api_https_url" {
+  value = "https://api.${var.domain_name}"
+}

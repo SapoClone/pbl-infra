@@ -23,6 +23,7 @@ module "pbl_api" {
   desired_count      = 1
   ecr_repository_url = module.pbl_api_ecr.url
   image_tag          = var.pbl_api_bootstrap_image_tag
+  certificate_arn    = aws_acm_certificate_validation.regional.certificate_arn
 
   task_role_policy_json = data.aws_iam_policy_document.pbl_api_task.json
 
