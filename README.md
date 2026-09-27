@@ -61,7 +61,7 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
 - `pbl-api` is reachable at `https://api.sapo.makeasy.id.vn` (HTTP on
   port 80 redirects to HTTPS). The cert is an ACM DNS-validated
   certificate, auto-renewed by AWS as long as the validation CNAME
-  records stay in place (Terraform manages them, so this is automatic).
+  records stay in place (they're manual CNAMEs at iNet — never delete them, or the cert can't auto-renew).
 - The root domain `makeasy.id.vn` stays managed at iNet — its DNS panel
   has no NS record type, so no Route53 zone hosts any part of
   `sapo.makeasy.id.vn`. Every hostname under it (API, CDN, ACM
@@ -212,8 +212,8 @@ terragrunt apply
 Review the plan before confirming — it creates ~50 resources (ECS cluster
 + ALB + service + task def + IAM roles, the Lambda function + event
 source mapping, the SQS queue + DLQ, both ECR repos, 8 SSM parameters, the
-GitHub OIDC provider + two deployer roles, the 2 ACM certs already
-requested in step 3b, the private S3 image bucket + its 4 config
+GitHub OIDC provider + two deployer roles, plus the 2 ACM certs + their
+validations from step 3b (already in state by this point), the private S3 image bucket + its 4 config
 resources, and the CloudFront distribution + OAC + bucket policy).
 
 Note the outputs — `pbl_api_deployer_role_arn` and
