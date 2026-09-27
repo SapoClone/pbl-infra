@@ -64,3 +64,11 @@ output "route53_name_servers" {
 output "pbl_api_https_url" {
   value = "https://api.${var.domain_name}"
 }
+
+output "image_bucket_name" {
+  value = aws_s3_bucket.images.id
+}
+
+output "image_cdn_url" {
+  value = "https://static.${var.domain_name}"
+}
