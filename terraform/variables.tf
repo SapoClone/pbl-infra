@@ -137,13 +137,20 @@ variable "pbl_mail_service_bootstrap_image_tag" {
   default = "bootstrap"
 }
 
-# --- Domain (Route53) ---------------------------------------------------
-# Delegated subdomain — the root domain (makeasy.id.vn) stays managed at
-# iNet; this subdomain's NS records point to the Route53 zone created in
-# route53.tf, so everything under it (api.*, static.*, ACM validation) is
-# fully Terraform-managed after the one-time delegation.
+# --- Domain --------------------------------------------------------------
+# The root domain (makeasy.id.vn) stays managed at iNet — its DNS panel
+# has no NS record type, so no Route53 zone hosts any part of this
+# domain. Every hostname under it (api.*, static.*, ACM validation
+# records) is a plain CNAME added by hand at iNet — see the *_cname
+# outputs in outputs.tf for exactly what to paste in.
 
 variable "domain_name" {
   type    = string
   default = "sapo.makeasy.id.vn"
+}
+
+variable "root_domain" {
+  description = "The zone iNet actually hosts. Used to compute each *_cname output's \"Host\" field relative to it (e.g. \"api.sapo\" instead of the full \"api.sapo.makeasy.id.vn\"), since that's the form iNet's Add Record form expects."
+  type        = string
+  default     = "makeasy.id.vn"
 }

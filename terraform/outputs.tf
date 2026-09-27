@@ -63,3 +63,39 @@ output "image_bucket_name" {
 output "image_cdn_url" {
   value = "https://static.${var.domain_name}"
 }
+
+output "acm_regional_validation_cname" {
+  description = "Add this as a CNAME record at iNet before the regional ACM cert (api.*) can validate. Print with: terragrunt output -raw acm_regional_validation_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix(tolist(aws_acm_certificate.regional.domain_validation_options)[0].resource_record_name, ".${var.root_domain}.")}
+    Value: ${tolist(aws_acm_certificate.regional.domain_validation_options)[0].resource_record_value}
+  EOT
+}
+
+output "acm_us_east_1_validation_cname" {
+  description = "Add this as a CNAME record at iNet before the us-east-1 ACM cert (static.*, for CloudFront) can validate. Print with: terragrunt output -raw acm_us_east_1_validation_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix(tolist(aws_acm_certificate.us_east_1.domain_validation_options)[0].resource_record_name, ".${var.root_domain}.")}
+    Value: ${tolist(aws_acm_certificate.us_east_1.domain_validation_options)[0].resource_record_value}
+  EOT
+}
+
+output "pbl_api_cname" {
+  description = "Add this as a CNAME record at iNet to make api.sapo.makeasy.id.vn reach pbl-api's ALB. Print with: terragrunt output -raw pbl_api_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix("api.${var.domain_name}", ".${var.root_domain}")}
+    Value: ${module.pbl_api.alb_dns_name}
+  EOT
+}
+
+output "image_cdn_cname" {
+  description = "Add this as a CNAME record at iNet to make static.sapo.makeasy.id.vn reach the image CDN. Print with: terragrunt output -raw image_cdn_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix("static.${var.domain_name}", ".${var.root_domain}")}
+    Value: ${aws_cloudfront_distribution.images.domain_name}
+  EOT
+}
