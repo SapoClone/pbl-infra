@@ -67,15 +67,3 @@ resource "aws_s3_bucket_policy" "images" {
   bucket = aws_s3_bucket.images.id
   policy = data.aws_iam_policy_document.images_cloudfront_read.json
 }
-
-resource "aws_route53_record" "images_cdn" {
-  zone_id = aws_route53_zone.this.zone_id
-  name    = "static.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.images.domain_name
-    zone_id                = aws_cloudfront_distribution.images.hosted_zone_id
-    evaluate_target_health = false
-  }
-}
