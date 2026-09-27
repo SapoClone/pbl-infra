@@ -8,26 +8,16 @@ resource "aws_acm_certificate" "regional" {
   }
 }
 
-resource "aws_route53_record" "regional_validation" {
-  for_each = {
-    for dvo in aws_acm_certificate.regional.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      type   = dvo.resource_record_type
-      record = dvo.resource_record_value
-    }
-  }
-
-  zone_id         = aws_route53_zone.this.zone_id
-  name            = each.value.name
-  type            = each.value.type
-  ttl             = 60
-  records         = [each.value.record]
-  allow_overwrite = true
-}
-
+# DNS validation for this cert is a CNAME added by hand at iNet (see the
+# acm_regional_validation_cname output in outputs.tf) — there's no
+# Route53 zone for this domain to create the record in automatically.
+# ACM's validation is a plain public DNS lookup, so it doesn't matter who
+# hosts the record; this resource just polls until it resolves. Each cert
+# only requests one domain name, so domain_validation_options always has
+# exactly one element.
 resource "aws_acm_certificate_validation" "regional" {
   certificate_arn         = aws_acm_certificate.regional.arn
-  validation_record_fqdns = [for r in aws_route53_record.regional_validation : r.fqdn]
+  validation_record_fqdns = [tolist(aws_acm_certificate.regional.domain_validation_options)[0].resource_record_name]
 }
 
 # us-east-1 cert — required by CloudFront regardless of the stack's home
@@ -42,25 +32,11 @@ resource "aws_acm_certificate" "us_east_1" {
   }
 }
 
-resource "aws_route53_record" "us_east_1_validation" {
-  for_each = {
-    for dvo in aws_acm_certificate.us_east_1.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      type   = dvo.resource_record_type
-      record = dvo.resource_record_value
-    }
-  }
-
-  zone_id         = aws_route53_zone.this.zone_id
-  name            = each.value.name
-  type            = each.value.type
-  ttl             = 60
-  records         = [each.value.record]
-  allow_overwrite = true
-}
-
+# See the comment on aws_acm_certificate_validation.regional above — same
+# reasoning, validated via a manually-added CNAME at iNet (the
+# acm_us_east_1_validation_cname output).
 resource "aws_acm_certificate_validation" "us_east_1" {
   provider                = aws.us_east_1
   certificate_arn         = aws_acm_certificate.us_east_1.arn
-  validation_record_fqdns = [for r in aws_route53_record.us_east_1_validation : r.fqdn]
+  validation_record_fqdns = [tolist(aws_acm_certificate.us_east_1.domain_validation_options)[0].resource_record_name]
 }
