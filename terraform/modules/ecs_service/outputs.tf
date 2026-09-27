@@ -21,7 +21,3 @@ output "task_role_arn" {
 output "execution_role_arn" {
   value = aws_iam_role.execution.arn
 }
-
-output "alb_zone_id" {
-  value = aws_lb.this.zone_id
-}
