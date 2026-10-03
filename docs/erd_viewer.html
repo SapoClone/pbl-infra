@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sapo Clone — ERD Viewer</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background: #0b1020;
+        color: #e8edf7;
+      }
+      header {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        border-bottom: 1px solid #26304a;
+        font-weight: 700;
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        height: calc(100vh - 65px);
+      }
+      aside {
+        padding: 16px;
+        border-right: 1px solid #26304a;
+        overflow: auto;
+      }
+      button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 11px 12px;
+        margin: 4px 0;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: #b9c3d8;
+        cursor: pointer;
+      }
+      button.active,
+      button:hover {
+        background: #1b2640;
+        color: #fff;
+      }
+      .main {
+        padding: 22px;
+        overflow: auto;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .open {
+        background: #2f6fed;
+        color: white;
+        text-decoration: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+      }
+      .code {
+        margin-top: 16px;
+        background: #070b15;
+        border: 1px solid #26304a;
+        border-radius: 10px;
+        padding: 16px;
+        white-space: pre;
+        overflow: auto;
+        font:
+          12px/1.45 ui-monospace,
+          SFMono-Regular,
+          monospace;
+        max-height: calc(100vh - 180px);
+      }
+      small {
+        color: #8e9ab3;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      🗃️ Sapo Clone — Mermaid ERD Viewer
+      <small style="margin-left: auto">10 diagrams · 93 entities</small>
+    </header>
+    <div class="app">
+      <aside>
+        <button data-i="0">Platform</button><button data-i="1">Catalog</button
+        ><button data-i="2">Commerce · Sales</button
+        ><button data-i="3">Commerce · Inventory</button
+        ><button data-i="4">Commerce · Purchasing</button
+        ><button data-i="5">Commerce · Promotion</button
+        ><button data-i="6">Commerce · Customer</button
+        ><button data-i="7">Finance</button
+        ><button data-i="8">Integration</button
+        ><button data-i="9">Insight</button>
+      </aside>
+      <main class="main">
+        <div class="top">
+          <div>
+            <h2 id="title" style="margin: 0 0 5px"></h2>
+            <small>Code được giữ nguyên từ file ERD gốc</small>
+          </div>
+          <a id="open" class="open" target="_blank">Mở trong Mermaid Live</a>
+        </div>
+        <div
+          style="
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #26304a;
+          "
+        >
+          <button id="tabDiagram" style="width: auto" class="active">
+            ERD Diagram</button
+          ><button id="tabCode" style="width: auto">Mermaid Code</button>
+        </div>
+        <div
+          id="diagram"
+          style="
+            margin-top: 12px;
+            background: #fff;
+            border: 1px solid #26304a;
+            border-radius: 10px;
+            min-height: calc(100vh - 225px);
+            overflow: hidden;
+          "
+        >
+          <iframe
+            id="frame"
+            style="width: 100%; height: calc(100vh - 225px); border: 0"
+            loading="lazy"
+          ></iframe>
+        </div>
+        <pre id="code" class="code" style="display: none"></pre>
+      </main>
+    </div>
+    <script>
+      const data = [
+        {
+          name: "Platform",
+          url: "https://mermaid.live/edit#pako:eNrFWEtP20AQ_isrn1opSHBsblQVF1SJErhFsjbeCV7Yh7sPIEr47x0_Eq_tdWKgVSOkmJnZmfl2nvE2yTSDZE4SMD84fTBULhXBz2WWaa8c2db_lh_vOSP4d3Pd0qwzXD0QkJQLcj9kFNTaF21YmlObD7iKShgeybUaUq2jztuWzKgDxyWQzAA-spS6mvlWf92BopPdj_ph_YppxKWiuKJOVtcwoFLGDFj7cUgdpi9YDG8TrxHYtOamFfwZubomSwy8LLTlDpBEvrQSM-IqJfj4dZn0FB1YH9fToDdawPRwfjdUZfmpcPZcvJoY6bIEJketF_mV1oJwm75QA7n29vOZW0NdgHPl6T7iVcWtA4CXjxG4OLuIXC9Xz5pnkDqQhUAzaRckg4xLKvB7Tb1wqaOvqUGxVuLRarUiVAj9gj4WdCMBb1WCyzWzo-YKA2v-Oj1tF46u1_8orPFqjFfu8T713hBWqEZS1pa8IwW058_aUA_LMMyCd2tpnLzFAvzbN7-vBgvAgHXM3YCR3Fqu1cSmXCZsrPVKzbwYRpCBzQwvHBoYwDxiu2xDR-6xYc9IcVARDUiH_UFlYfJEgzM9dRpLQz9PwB3XsI-ioJ-NX7RWB9ELm1RhytYitXK52AyTjWaOP79jlpQYfnnt6KTsx-6pRnL_d6kkfYLAJ47DtyY_U-GhG1i_OoD8ROGd8mq0WSHDjK4V8FpwnHdxZoYtBIQYO3t0Bbu39GGYyuEeER1j5UXWrQudqlaKLq_O1AijMNgfMhc9hA0ejE1djllTpVNfpzbobIpTnKVyNX2KYUa5tTbykkmu_sPK3N2lPjq0fFFo4xYwqUnvs7DCndISeDRRjw4PdMSGBb-vaKSzVKuw2CdmsWJDYLewxszO7_QTTA0O7v6PkOFatCmg34QbFj5WeSuX_gKyC4nr7tKfn6-_bbqnxzfoZaK8EHQlILK_udLbXgpMK1YDz3h2eql2f-_tdmdnetv7OTFHX_c-NqR3yjXL0Jwgos5GX_J3u97SO8fhodb8wSPImLZ6a5yTcrfVGxuukqHEwWjrVWD1iFTXWjWL5-WqzNXen4oW8IMNI1QUkE8LDwE0lluR0GxcohrQjUQ76MbBdYbSmKJRoUAXBjFs-D1VQXs86Oy0m2MeRgSTGUkkXiPlLJmTbeJykNVrjOYHTfKGAtQ7vdioDOnOeEBK3b-bFx0tGRjH1v-zeRNSvRF5-wNss1VA",
+          code: 'erDiagram\n    Account {\n        uuid id PK\n        string email UK\n        string password_hash\n        string name\n        string phone\n        string status\n        datetime created_at\n    }\n    Tenant {\n        uuid id PK\n        string name\n        string subdomain UK\n        string phone\n        string email\n        string address\n        string status\n        datetime created_at\n        datetime updated_at\n    }\n    AccountTenant {\n        uuid account_id PK, FK "composite PK (account_id, tenant_id)"\n        uuid tenant_id PK, FK "composite PK (account_id, tenant_id)"\n        string role\n        datetime created_at\n    }\n    Branch {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n        string code\n        string address\n        string phone\n        bool is_warehouse\n        string status\n        datetime created_at\n    }\n    BranchSetting {\n        uuid branch_id PK "FK 1-1"\n        string invoice_template_code\n        decimal default_tax_rate\n        jsonb allowed_payment_methods\n        string invoice_prefix\n        datetime updated_at\n    }\n    Staff {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n        string email\n        string phone\n        string password_hash\n        string status\n        datetime created_at\n    }\n    StaffBranch {\n        uuid staff_id PK, FK "composite PK (staff_id, branch_id)"\n        uuid branch_id PK, FK "composite PK (staff_id, branch_id)"\n    }\n    Role {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n        bool is_seeded\n    }\n    Permission {\n        uuid id PK\n        string code UK\n        string module\n        string description\n    }\n    RolePermission {\n        uuid role_id PK, FK "composite PK (role_id, permission_id)"\n        uuid permission_id PK, FK "composite PK (role_id, permission_id)"\n    }\n    StaffRole {\n        uuid staff_id PK, FK "composite PK (staff_id, role_id)"\n        uuid role_id PK, FK "composite PK (staff_id, role_id)"\n    }\n    Plan {\n        uuid id PK\n        string code UK\n        string name\n        string description\n        decimal price_monthly\n        bool is_active\n        datetime created_at\n    }\n    PlanQuota {\n        uuid id PK\n        uuid plan_id FK\n        string quota_key\n        int quota_value\n    }\n    Subscription {\n        uuid id PK\n        uuid tenant_id FK\n        uuid plan_id FK\n        string status\n        datetime started_at\n        datetime expires_at\n        datetime cancelled_at\n        datetime created_at\n    }\n    TenantUsage {\n        uuid tenant_id PK "FK 1-1"\n        int branches_count\n        int staff_count\n        int products_count\n        int orders_this_month\n        int storage_used_mb\n        datetime updated_at\n    }\n    PlatformAdmin {\n        uuid id PK\n        string email UK\n        string password_hash\n        string name\n        string role\n        string status\n        datetime created_at\n    }\n    SupportSession {\n        uuid id PK\n        uuid platform_admin_id FK\n        uuid tenant_id FK\n        string reason\n        bool is_read_only\n        datetime started_at\n        datetime ended_at\n    }\n    RefreshToken {\n        uuid id PK\n        string subject_type\n        uuid subject_id "FK mềm, tùy subject_type"\n        uuid tenant_id "nullable"\n        string token_hash\n        datetime expires_at\n        datetime revoked_at\n        datetime created_at\n    }\n\n    Account ||--o{ AccountTenant : ""\n    Tenant ||--o{ AccountTenant : ""\n    Tenant ||--o{ Branch : has\n    Branch ||--|| BranchSetting : configures\n    Tenant ||--o{ Staff : employs\n    Staff ||--o{ StaffBranch : ""\n    Branch ||--o{ StaffBranch : ""\n    Tenant ||--o{ Role : defines\n    Role ||--o{ RolePermission : ""\n    Permission ||--o{ RolePermission : ""\n    Staff ||--o{ StaffRole : ""\n    Role ||--o{ StaffRole : ""\n    Plan ||--o{ PlanQuota : ""\n    Tenant ||--o{ Subscription : ""\n    Plan ||--o{ Subscription : ""\n    Tenant ||--|| TenantUsage : ""\n    PlatformAdmin ||--o{ SupportSession : ""\n    Tenant ||--o{ SupportSession : ""',
+        },
+        {
+          name: "Catalog",
+          url: "https://mermaid.live/edit#pako:eNq1V21r2zAQ_ivCnzZIB-2XsezTlrIxukGhtJ8CQrYvjpgsZXrJKGn_-062XMeS87a0JhD77tGd7tHdSdpkhSohm5IM9DVnlWb1XBJ8ZsxCpfQj2bTf_nGOlwR_tzeRzIJk0lJ8-xarVkxDpyLzzIBYTIh0QrBcwDzr0cZqLisiWQ2J0AhXtcLn9u-rZrI8Y2qJs2D3i0VF7iy8pe0HJhycyyvrrO1wv_ZOBv5vtSpdYc91XITEeFnSscVskLlfpL2wfWtegik0X1muZKLLmQHqJLe9JldKEG5ooepcpQlkmXWmF5cYhOU1kEIDvpaU2TGuHpjmyMPZNdBa27FS5rejvgjJ_c1IoDpRlVDwmgm0ygtIxWxdoTljaaTnGIdVlgn6x-FEuX2kC6UbaOIWDVVIsBap-b_Aq6XdS3DgMJB3IO330LZuDdCG7UmbRbi8K2U4FujtDXnXIyZbBdGkPsreJxmZYs60HEKd-aT7YaE-JbwmU-nhIGPchBRLLsotSRpojHgl2z6HuuwZEHCPtThTcg3aYL2-bb34uqfDltElZ_EyBbpghVU67Q--dUSljmXykxv7mi2_6zG-LrSl_jVSALbGobibYQkL5oQdn-RsyaQEcUqeNX2AChy8JxEGIJ8FjZsdudXp_MjjDX32hFo9d5fAPkoyd1eXn658FdSgC_hwxwSYEF5UXn30zliF8O9audWbcxCc0cp7G6cihhzDSGL2ADGDoHcxc2rz-R9C9jWcw63mOGMjmxuGGh1Jn54uLtSm_56is_acSdSisxaju-PPlBSCGcMXHMz2YTKBNccXMzw7DUHd8WBKlmwcGPXFLWB_0gzQaJ9MbXbeAn58e_VUdAxEqqPHjfvr97hpu7a5Cof7k8b57WVrlfru-0Jt1OmGM9uJHnSG48aESR3gOYY3mVlmE5Khu5rxEi9Pm8wuoW6uUaF7Z88IYM6qu0dZoNxqByhxK9_zw0WrF0PJcbP6FW5izY3s-R-fU1xc",
+          code: 'erDiagram\n    Category {\n        uuid id PK\n        uuid tenant_id FK\n        uuid parent_id FK "self, nullable"\n        string name\n        string slug\n    }\n    Brand {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n    }\n    Attribute {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n    }\n    AttributeValue {\n        uuid id PK\n        uuid tenant_id FK\n        uuid attribute_id FK\n        string value\n    }\n    Product {\n        uuid id PK\n        uuid tenant_id FK\n        uuid category_id FK "nullable"\n        uuid brand_id FK "nullable"\n        string name\n        string description\n        string base_unit\n        bool is_combo\n        string status\n        datetime created_at\n    }\n    ProductVariant {\n        uuid id PK\n        uuid tenant_id FK\n        uuid product_id FK\n        string sku_code UK\n        string barcode UK\n        decimal price\n        decimal avg_cost_price\n        int total_quantity_for_cost\n        string image_url\n        decimal weight\n        string status\n    }\n    VariantAttributeValue {\n        uuid tenant_id FK\n        uuid variant_id PK, FK "composite PK (variant_id, attribute_value_id)"\n        uuid attribute_value_id PK, FK "composite PK (variant_id, attribute_value_id)"\n    }\n    ComboItem {\n        uuid tenant_id FK\n        uuid combo_variant_id PK, FK "composite PK (combo_variant_id, child_variant_id)"\n        uuid child_variant_id PK, FK "composite PK (combo_variant_id, child_variant_id)"\n        int quantity\n    }\n    UnitConversion {\n        uuid id PK\n        uuid tenant_id FK\n        uuid product_id FK\n        string unit_name\n        decimal conversion_factor\n        bool is_base\n    }\n    PriceList {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n        date start_date\n        date end_date\n        bool is_default\n    }\n    PriceListChannel {\n        uuid tenant_id FK\n        uuid price_list_id PK, FK "composite PK (price_list_id, channel_id)"\n        uuid channel_id PK "composite PK (price_list_id, channel_id); id trần → commerce.SalesChannel"\n    }\n    PriceListCustomerGroup {\n        uuid tenant_id FK\n        uuid price_list_id PK, FK "composite PK (price_list_id, customer_group_id)"\n        uuid customer_group_id PK "composite PK (price_list_id, customer_group_id); id trần → commerce.CustomerGroup"\n    }\n    PriceListItem {\n        uuid tenant_id FK\n        uuid price_list_id PK, FK "composite PK (price_list_id, variant_id)"\n        uuid variant_id PK, FK "composite PK (price_list_id, variant_id)"\n        decimal price\n    }\n\n    Category ||--o{ Category : "parent of"\n    Category ||--o{ Product : classifies\n    Brand ||--o{ Product : brands\n    Product ||--o{ ProductVariant : has\n    Product ||--o{ UnitConversion : has\n    Attribute ||--o{ AttributeValue : has\n    ProductVariant ||--o{ VariantAttributeValue : ""\n    AttributeValue ||--o{ VariantAttributeValue : ""\n    ProductVariant ||--o{ ComboItem : "combo parent"\n    ProductVariant ||--o{ ComboItem : "child of"\n    PriceList ||--o{ PriceListChannel : ""\n    PriceList ||--o{ PriceListCustomerGroup : ""\n    PriceList ||--o{ PriceListItem : has\n    ProductVariant ||--o{ PriceListItem : priced',
+        },
+        {
+          name: "Commerce · Sales",
+          url: "https://mermaid.live/edit#pako:eNq1V21r5DYQ_ivCcN82RzYphORjr5SWozQ0XD8t-MbyeC1Olly9bLMk-e_Vmzd-kXPlkpiQtfXMjOWZZx5JDwWVNRY3pED1C4O9gm4niLvugKP-1IIQyMlDHPOXtawm7u_282zMoABhSnf36wjSRjGxJ-bY42JQQLcc1AaM1XH4KU2lZY15xRwCVCkQtPXQrvCWame3CFeC7OzF9vqC9BxMI1X38edguCtm_m5eTfM_3O-83di7BoOGdUhkjwLrEkwGo1zqOYaUdcCDm0tMSUG3S9Q7DmiJ9z1Sg_V3zIAaC_zFzI-rJA1OyvGnqlG9nhKed-TL3IVGxr1LCanVRnaoYnAXRFjOoeK4GSJ0srYcT4ZvR4Lo7Xm8ePnYLKVG-gyXK_Xo4dihy-oK3FjeMM6zJpWUnLSgS91KZWCPS6JoWxlpxuwYkJppKq2LCp3_ybi2rO89yRrMBDZwv-oZ3rhAF_zzFxOGHFBpJkWujRS625Ues309Acd0_t1g91qFiVXLIQdQLHnliUPBJUDuP94qR0Bq_o72GWbob7b0jbNkRfQss5o6vH8KDtn_xzqMmePCzQq25kOlSFUoGycnUi1NKtBYLmMPcAjeK0ZxBaNSmx9gIWcCyxmFQxF6UL4nUpVcvU-dqJE3GzL0o6_J-fYn94ldJcclCN3DdBmAkraM1xMi3cbGfBcapYp0aFqZkfdFMgbO98Cm3bC-yv6FxirxhrPfOHV32f3y-YZsXVLPt9ut_w9b4VTeNwC9JtSNnDeXxPjnesuSHTiPOJ9MD6gAlIv14wSDHovDyuo2pE5hY0W9Jj4Jnec9LidJbKrjj-8J5oI1qcVbiFJK1gulOnXC24vWusKsqcBYk-9CxX5jbi1Wx_fsqkiNMrtHlbwuD8BtZveK_86R0w5mn6PFs8TkqZD8ZlT48IF8StsRYlob-uSaDjuVr8NW5esgW9rY6rm_hrZzD5fk4H-rOpSDRIurDbl3JNO0xQ5G1nB1HD3hFQnvbZz8hiPCYqMUpnqa5wu1cl-VOV88Pp6dyYe0s7zxkuzyTg4MhkydQs8sXYtR1ONjQj4UOwlJBMZWoc1u_JJmgAk93xVkTHdFWAPSknIWl4Jc_GFJ8C5eikl1zNg9DtrrzWLD4uTrE5yCjsThu7Oe2O6KxMVLRxBJ6qC9F57K_g7P5XqOpr0YQwH9hvGLig0pXHE694XuJPlQGMemcKassQHLTfHkDMAaeXcU1I0bZd2eu4gbsnTqfB7Gmrm3_JGOpeF4-vQfiLifnQ",
+          code: 'erDiagram\n    SalesChannel {\n        uuid id PK\n        uuid tenant_id FK\n        string type\n        string name\n        string status\n    }\n    Shift {\n        uuid id PK\n        uuid tenant_id FK\n        uuid branch_id "id trần → platform.Branch"\n        uuid staff_id "id trần → platform.Staff"\n        datetime opened_at\n        datetime closed_at\n        decimal opening_cash\n        decimal closing_cash_expected\n        decimal closing_cash_actual\n        string status\n        string note\n    }\n    Order {\n        uuid id PK\n        uuid tenant_id FK\n        string code UK\n        uuid channel_id FK\n        uuid branch_id "id trần → platform.Branch"\n        uuid customer_id FK "nullable, → module customer"\n        uuid staff_id "id trần → platform.Staff"\n        uuid shift_id FK "nullable"\n        string order_status\n        string payment_status\n        string fulfillment_status\n        bool has_shortage\n        decimal subtotal\n        decimal discount_amount\n        decimal shipping_fee\n        decimal tax_amount\n        decimal total_amount\n        string note\n        int version\n        datetime created_at\n        datetime updated_at\n    }\n    OrderItem {\n        uuid id PK\n        uuid tenant_id FK\n        uuid order_id FK\n        uuid variant_id "id trần → catalog.ProductVariant"\n        string sku_code\n        string product_name\n        string variant_name\n        decimal quantity\n        string unit_name\n        decimal conversion_factor\n        decimal base_quantity\n        decimal unit_price\n        decimal unit_cost\n        decimal discount_amount\n        decimal line_total\n        uuid parent_order_item_id FK "self, nullable — combo"\n        bool is_combo_child\n    }\n    Payment {\n        uuid id PK\n        uuid tenant_id FK\n        uuid order_id FK\n        string method\n        decimal amount\n        datetime paid_at\n        string status\n    }\n    Return {\n        uuid id PK\n        uuid tenant_id FK\n        uuid order_id FK, UK "UK: 1 đơn chỉ có tối đa 1 Return"\n        string return_code UK\n        string reason\n        string status\n        decimal refund_amount\n        string refund_method\n        uuid created_by "id trần → platform.Staff"\n        datetime created_at\n    }\n    ReturnItem {\n        uuid id PK\n        uuid tenant_id FK\n        uuid return_id FK\n        uuid order_item_id FK\n        uuid variant_id "id trần → catalog.ProductVariant"\n        decimal quantity\n        decimal unit_price\n    }\n    OrderStatusHistory {\n        uuid id PK\n        uuid tenant_id FK\n        uuid order_id FK\n        string status_type\n        string old_value\n        string new_value\n        uuid changed_by "id trần, nullable"\n        datetime changed_at\n    }\n    %% Customer thuộc module `customer` — stub chỉ để vẽ quan hệ, xem schema đầy đủ ở diagram module customer\n    Customer {\n        uuid id PK\n    }\n\n    SalesChannel ||--o{ Order : "sold via"\n    Customer ||--o{ Order : places\n    Shift ||--o{ Order : "sold in"\n    Order ||--o{ OrderItem : contains\n    OrderItem ||--o{ OrderItem : "combo parent-child"\n    Order ||--o{ Payment : "paid by"\n    Order ||--o| Return : "returned via"\n    Return ||--o{ ReturnItem : contains\n    OrderItem ||--o{ ReturnItem : "trả cho dòng nào"\n    Order ||--o{ OrderStatusHistory : "tracked by"',
+        },
+        {
+          name: "Commerce · Inventory",
+          url: "https://mermaid.live/edit#pako:eNrtV1Fr2zAQ_itCz2khfRnN4xiDsA7KOvZkEIp0TkQtKZVOYSbNf59kO2lc26FZne5lxg_iTvdJ992dTtpSYSXQGQX3RfGl4zozmSHxe0ArHucImmz3ovSFoCSJ__23jhTBcIMsjr52lRvuVKPNaJrssjAF_smQLNxMb2-I4MgLu7y-d1YGgb_q-RntIC0cN2I1DLQuOObW6evP1cQ2gjJInkIEVlgya9iKGzmod-DBbaA1QXIEVBpIWKehZBz36l2Lup-raL6yhbwwf2cw1KVCK8OesOyI-e9jcduxHyBArXEct962VY9OmSXxNjgBDMs1dIAaXQVkQlHwRQGTuCLRCVFMNTFpIG8VWdQDIqzWEI3610KOwXeWEQ6qqC_Kkxs-ZMl-_lCWNGSOV2euBnxfFkkQSvPiUAl9umAUMmH9gGNz7wP8z5ExcqSicrwMUQnuMvnx6gSMcfM5uHG2nTur2dtSoQaz7LzEuVQwW-qqPDen2kZD2njxxgbxQ0LOH_9J0X9I7OJZsC7gZM-P7o8XOJ8gGUbM94UudXRf-rivvl4vbDDJpx6VVHn-Wt4wHpny1nRYmJsNGLSuvAO5HKvyL3P1EfHqt4Q-txe8iCDAeI7gen3P-_tLUlQr_0VLOffGQJ6fr67stnuLmMUFDHJlfE8_PjZ6aSsDJofz-9iqdT4NGaZToGW0r4sXAzqhkQXNlaSzLcUV6PQKkZDzUCDdTSgPaB9KI-gMXYAJre_bzSNlLwSpYrZ9r58w1Utm9wdb7RQO",
+          code: 'erDiagram\n\n    StockItem {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid variant_id "id trần → catalog.ProductVariant"\n\n        uuid branch_id "id trần → platform.Branch"\n\n        int quantity_on_hand\n\n        int quantity_reserved\n\n        datetime updated_at\n\n    }\n\n    StockThreshold {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid variant_id "id trần"\n\n        uuid branch_id "id trần"\n\n        int min_qty\n\n        int max_qty\n\n    }\n\n    StockReceipt {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần"\n\n        string source_type\n\n        uuid source_id "nullable, FK mềm nội bộ commerce"\n\n        string status\n\n        uuid created_by "id trần"\n\n        datetime created_at\n\n    }\n\n    StockReceiptItem {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid receipt_id FK\n\n        uuid variant_id "id trần"\n\n        decimal quantity\n\n        decimal unit_cost\n\n    }\n\n    StockIssue {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần"\n\n        string source_type\n\n        uuid source_id "nullable, FK mềm nội bộ commerce"\n\n        string status\n\n        uuid created_by "id trần"\n\n        datetime created_at\n\n    }\n\n    StockIssueItem {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid issue_id FK\n\n        uuid variant_id "id trần"\n\n        decimal quantity\n\n    }\n\n    StockTransfer {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid from_branch_id "id trần"\n\n        uuid to_branch_id "id trần"\n\n        string status\n\n        uuid created_by "id trần"\n\n        datetime created_at\n\n        datetime received_at\n\n    }\n\n    StockTransferItem {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid transfer_id FK\n\n        uuid variant_id "id trần"\n\n        decimal quantity\n\n    }\n\n    StockTake {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần"\n\n        string status\n\n        uuid created_by "id trần"\n\n        datetime created_at\n\n        datetime completed_at\n\n    }\n\n    StockTakeItem {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid stock_take_id FK\n\n        uuid variant_id "id trần"\n\n        int system_qty\n\n        int counted_qty\n\n        int diff_qty\n\n        string reason\n\n    }\n\n    InventoryLedger {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid variant_id "id trần"\n\n        uuid branch_id "id trần"\n\n        int change_qty\n\n        int balance_after\n\n        string ref_type\n\n        uuid ref_id "FK mềm nội bộ commerce"\n\n        datetime created_at\n\n    }\n\n    StockReceipt ||--o{ StockReceiptItem : contains\n\n    StockIssue ||--o{ StockIssueItem : contains\n\n    StockTransfer ||--o{ StockTransferItem : contains\n\n    StockTake ||--o{ StockTakeItem : contains',
+        },
+        {
+          name: "Commerce · Purchasing",
+          url: "https://mermaid.live/edit#pako:eNqtVFFLwzAQ_ishz1PQF7GPIoKIOBj6VCi35LYFmqReLsMx999Naiuui75oKDS578tx913u9lJ5jbKSSLcG1gS2drUTaS1i17UGSexHS14xGi3SN384sTI6cNyk3d0RGJiMWwsHFgvmbuNdyY4WTFuwg9aEIXxHNCpjoU3_JTdLaMEpFLUkBC1syq6t5REdGNlYFCoxGHUDPMKHcTOPpDYQ8In0PyjQg0tKcW0yWMvMpTpeIFw5UcfLi-tL0bXAK0_2_KYnHsfcewhDRX6UOJdSPJeQwMAxTFUQ-NahyhLkU0lS9gxtA9ZHxyfxjPotd5OU_qj3PaP9H807_wOwBTLDtXI1FKTE_fp8Tl5HxS-f_Elig0ivMUGGd43P0aP-lUOo0GyPSUORojPcTNtkdKC82yIF412zAsWeSqTeg_LhVOCvbn5_Pzvz-8kDr8a3FcoNULrUV6nKcTEYF-RMWqTUtFpWe8kbtHmqaFxBbFkeZhIi-8XOKVkxRZzJ2OWHMQyd0YjapNQeP0dSP5kOH6HBf0A",
+          code: 'erDiagram\n\n    Supplier {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string name\n\n        string phone\n\n        string email\n\n        string address\n\n        decimal debt_balance "read model"\n\n        datetime created_at\n\n    }\n\n    PurchaseOrder {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần → platform.Branch"\n\n        uuid supplier_id FK\n\n        string code UK\n\n        string status\n\n        date expected_date\n\n        decimal total_amount\n\n        uuid created_by "id trần"\n\n        datetime created_at\n\n    }\n\n    PurchaseOrderItem {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid po_id FK\n\n        uuid variant_id "id trần → catalog.ProductVariant"\n\n        decimal quantity_ordered\n\n        decimal quantity_received\n\n        string unit_name\n\n        decimal conversion_factor\n\n        decimal unit_cost\n\n    }\n\n    Supplier ||--o{ PurchaseOrder : supplies\n\n    PurchaseOrder ||--o{ PurchaseOrderItem : contains',
+        },
+        {
+          name: "Commerce · Promotion",
+          url: "https://mermaid.live/edit#pako:eNq9V21r2zAQ_ivCUNjALU03KE2_tWP7UMoKpf1kcBVLSUQtyZWlQknz33fyW2T5JV7TLQSi6J6703M63UmbIJGEBnMUUPWD4ZXCPBIIPndKcqmZFGhTTtiPMYwg-N7deHOaCix0DKOfjijXiokVEpjTzqR-y5xJgjUFCVY6tkNPQAXxpisjoKFN3kZrxilKFIUhibEuhVuP1JXCIll3qPXTKERZrRoX_ENAoAiCxzOZM1jj3Q364mJCtCh8wPBrFHjGGpFVm2rl0kZeq8jMKD4XKDJns4szlKVYL6XiJyWl2pVP-NrkWnKqfilpsn_LO6lcxSvrq5d_B_JRy5d1GLgkJqUNYigMt0z8VoSqR5waei0FYQemeDdGrpTQhHGcIs5ELK3f-NU67l_b_bMZXtGn7tArVqy01t2anWx_bjp2-pMzwRqncnUCHIlJ9GOJH8xROLIrqd7-UxSSyl1_hu6E--PgWhoPRE1xKARXVNAl0_8sIau6uSjdxF4RrrLVydHG4lJRGju5EQUuzRAJk6Z4kVKP2DWc008_X-Dcd-dws_0MPdx8vLcwoZHJ8YrGKeNMDwriDM5zU3A8FPSeRBqhR1tWK0gP1vKhkUoKU72isv70KtVl1Y9uuKe6tlpuwdnrtyWzuvf0M5zEZuBAN4DQJTHSbw4y1bezFdGiqXzGlWnPVk07CZ1UGD8xO6O9N7XKkD1X3VpBWF5EI8a8E5SjI9S6doTNX6TXxpYOcpHUufVUR_3psoxmHybHKc2fbFaezr7D-swCxqez2cwCk2_o1f4uCHoxWKB1MXleZeLo_cfZn20bPwFarnYc59-p39-Pj-Wmcx-dw0bVGzQMbnNxddqS6XrDvgYuTHOk6Ithiub7DLRuNdPVuneB6bp1E50jeM4IPYSvepONwwInzxSu5U1frmQtZFm-LNwWAagGY-B2zevbo8PwNQ6Wkrtp-Dcgr2jNEc6ylA3GtwOPglKBIJz3x2KPShCiAJhxzAi8QDeBXlNevEUJXWKT6mALAGy0vH8TCcxrZaAnBSazTad6re6mKSSKVLfVc7Z41m7_APKU1o0",
+          code: 'erDiagram\n    Promotion {\n        uuid id PK\n        uuid tenant_id FK\n        string name\n        string type\n        date start_date\n        date end_date\n        string status\n        datetime created_at\n    }\n    PromotionBranch {\n        uuid tenant_id FK\n        uuid promotion_id PK, FK "composite PK (promotion_id, branch_id)"\n        uuid branch_id PK "composite PK (promotion_id, branch_id); id trần → platform.Branch"\n    }\n    PromotionCustomerGroup {\n        uuid tenant_id FK\n        uuid promotion_id PK, FK "composite PK (promotion_id, customer_group_id)"\n        uuid customer_group_id PK, FK "composite PK (promotion_id, customer_group_id); → module customer"\n    }\n    PromotionMinOrderValueCondition {\n        uuid id PK\n        uuid tenant_id FK\n        uuid promotion_id FK\n        decimal min_order_value\n    }\n    PromotionSkuCondition {\n        uuid tenant_id FK\n        uuid promotion_id PK, FK "composite PK (promotion_id, variant_id)"\n        uuid variant_id PK "composite PK (promotion_id, variant_id); id trần → catalog.ProductVariant"\n    }\n    PromotionCategoryCondition {\n        uuid tenant_id FK\n        uuid promotion_id PK, FK "composite PK (promotion_id, category_id)"\n        uuid category_id PK "composite PK (promotion_id, category_id); id trần → catalog.Category"\n    }\n    PromotionBenefit {\n        uuid id PK\n        uuid tenant_id FK\n        uuid promotion_id FK\n        string benefit_type\n        decimal value\n        uuid free_variant_id "id trần, nullable"\n    }\n    Coupon {\n        uuid id PK\n        uuid tenant_id FK\n        uuid promotion_id FK "nullable"\n        string code UK\n        date start_date\n        date end_date\n        int usage_limit\n        int usage_limit_per_customer\n        int used_count\n        string status\n    }\n    CouponUsage {\n        uuid id PK\n        uuid tenant_id FK\n        uuid coupon_id FK\n        uuid order_id FK\n        uuid customer_id FK "nullable, → module customer"\n        datetime used_at\n    }\n    CouponCustomerUsage {\n        uuid tenant_id FK\n        uuid coupon_id PK, FK "composite PK (coupon_id, customer_id)"\n        uuid customer_id PK, FK "composite PK (coupon_id, customer_id)"\n        int used_count\n    }\n    OrderPromotion {\n        uuid id PK\n        uuid tenant_id FK\n        uuid order_id FK\n        uuid promotion_id FK "nullable"\n        uuid coupon_id FK "nullable"\n        string promotion_name\n        string coupon_code\n        decimal discount_amount\n    }\n    %% CustomerGroup, Customer thuộc module `customer`; Order thuộc module `sales` — stub để vẽ quan hệ\n    CustomerGroup {\n        uuid id PK\n    }\n    Customer {\n        uuid id PK\n    }\n    Order {\n        uuid id PK\n    }\n\n    Promotion ||--o{ PromotionBranch : ""\n    Promotion ||--o{ PromotionCustomerGroup : ""\n    CustomerGroup ||--o{ PromotionCustomerGroup : ""\n    Promotion ||--o{ PromotionMinOrderValueCondition : requires\n    Promotion ||--o{ PromotionSkuCondition : requires\n    Promotion ||--o{ PromotionCategoryCondition : requires\n    Promotion ||--o{ PromotionBenefit : grants\n    Promotion ||--o{ Coupon : "backed by"\n    Coupon ||--o{ CouponUsage : "used in"\n    Coupon ||--o{ CouponCustomerUsage : ""\n    Customer ||--o{ CouponCustomerUsage : ""\n    Customer ||--o{ CouponUsage : uses\n    Order ||--o{ CouponUsage : uses\n    Order ||--o{ OrderPromotion : applies\n    Promotion ||--o{ OrderPromotion : "applied as"\n    Coupon ||--o{ OrderPromotion : "applied as"',
+        },
+        {
+          name: "Commerce · Customer",
+          url: "https://mermaid.live/edit#pako:eNq1VttqGzEQ_RWxEGjBKd60EOK30NI-NKGBpG8Lzqw0sUV12eqS1tj-945kL8naskNpuhhWnpmVzpw5I2lZcSuwmlToPkmYOdCNaQyj52P0wWp0X5yNHVv25vTEKAWj383XPWtAAyZMafR54PTBSTNjBjT25vXuSv-8SHby7WzTWQK-CWJNZaJS0CpsqhdgPTN3c2uQfS8lghqkKthnaAS65w4BAZmwbSHY2-h4aWEfIEQ_mAW51KDo3YapklqGkpdH55CYSVGUs0MQTFN91TDrBClIjYxTREAxhXCwKJdCOPT-lWtzSB-OEulkSuFYSQp22MAkaoruX-BEwSxkGvBQWsjZR2mG1WmtVUx6ovcBotrn7Bp1i87PZXcnX0HOB8QpTWBammlnaVQWifTcRprSUXX3UF7ZBaiwuOQ5poDyeZVuUu9QA9Wn9VBDR5EniBt40xYU7NC4-VT2Mig25y7aOwfGAw_Smv8txey2ThTwsSaejesPqaci_fOg0I_Yb9RUq9iytonjMYJhggZ1O25ijaKVxS0nLDosU_a3nbpl6BZDSBMvj_CQq5ksLkGDc5MSqi_OWKcgPFin393l2CHiXvbkIg5ESXGgs9464iwnsQfy5IR9S5SyMI-Zlgves3ifabzvuc1MJv7qOgXy9-wxvVvBfkaidp6N5yPGE9kPF2m3RPcoOXFkNRWUBqavg8qDcSoiT99hCn9zZXP2tWT12x7fBtwLylqXz8bV6vTULp-OsQnLR4_fO992AvutdcLmUA5erXa7dRC7s99sp9_7glrnx0Ewhf6aMARn_JCaY-Gk6NmMgFSjimamk1FUk2UV5qjTzWK7W1brUQUx2NuF4dUkuIijKnZJ4NuLR29EIYN115trSb6drP8AVuXG6Q",
+          code: 'erDiagram\n\n    CustomerGroup {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string name\n\n    }\n\n    Customer {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid customer_group_id FK "nullable"\n\n        string name\n\n        string phone UK\n\n        string email\n\n        string gender\n\n        date dob\n\n        string source\n\n        string status\n\n        decimal debt_limit\n\n        decimal current_debt "read model"\n\n        datetime created_at\n\n    }\n\n    CustomerAddress {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid customer_id FK\n\n        string recipient_name\n\n        string phone\n\n        string address_line\n\n        string ward\n\n        string district\n\n        string province\n\n        bool is_default\n\n    }\n\n    MembershipTier {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string name\n\n        int min_points\n\n        decimal discount_rate\n\n    }\n\n    LoyaltyAccount {\n\n        uuid customer_id PK "FK 1-1"\n\n        uuid tenant_id FK\n\n        int points_balance\n\n        uuid tier_id FK "nullable"\n\n    }\n\n    LoyaltyTransaction {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid customer_id FK\n\n        uuid order_id FK "nullable — module sales, xem stub bên dưới"\n\n        string type\n\n        int points\n\n        datetime created_at\n\n    }\n\n    LoyaltySetting {\n\n        uuid tenant_id PK "id trần → platform.Tenant"\n\n        bool is_enabled\n\n        decimal amount_per_point\n\n    }\n\n    %% Order thuộc module `sales` — stub để vẽ quan hệ, cùng service commerce nên là FK cứng (Loại 1)\n\n    Order {\n\n        uuid id PK\n\n    }\n\n    CustomerGroup ||--o{ Customer : groups\n\n    Customer ||--o{ CustomerAddress : has\n\n    Customer ||--|| LoyaltyAccount : has\n\n    MembershipTier ||--o{ LoyaltyAccount : ranks\n\n    Customer ||--o{ LoyaltyTransaction : earns\n\n    Order ||--o{ LoyaltyTransaction : triggers',
+        },
+        {
+          name: "Finance",
+          url: "https://mermaid.live/edit#pako:eNrFVktr3DAQ_itG501gcyn1MUlDYFsaWHozGFka2yJ6GD1S3M3-98qOvcFradcH0xofxMxoZvR9o9EcEFEUUIpAPzJcaSwymcnEfw_Y1PdKvT5gC5XSbXIYNd3nHKOJ_192M6kFiaXN_eppojRWM1klEgsIiG3bTMSFUjxhJjetsXBK6nie3TdpV0itVxYaS1J3ygx1tjpzW8BfZJK5u-3Xu6Th2JZKi9v73jBDMw-mZqWNOyBKCNAEbved3SaRjnNccAh4IgPoURTP4aJAmMA8wUI5aQMbNPj0gebdRp_fhdijZX-Op10iumOQrYglPAQgXWDQDda2XRBlYt6HuuhdKgtzHxr6TIv2DPGpC-qNLBNwssd2Xk_OWOXZeYTCfgdagV6nqMjgd0FVjCkEwFKahlxcYWR5jYyaAnNf2pDj0lOzgIUlyO5d03C2PrJm8Lvkvg2mAWQbp0mNDeT_HeJFWNasaXzcF63eGF0BycgxLrdqY7F1JpicAGnXoffEx6_dNXp_dqYhbgeU4sfWmLz6Rd69gSGyvDyPU2kGNvISQjB5ad7gNniRphBeoX-ipsDZG-h4fXQU7Hv3z8w3lLVeRzO4joKpOM3nxxorCX4HlB8dssayCjXx2NX7RGrYueCirN184qUVAOva2_aPm8hssHt_v7lRh7ORKh1nEPYHTLT_DFtPVz9NSsdLxrmZdYUz02mJph6j_jaCn8PaT5QuBYzwmya-n1-KHt3n2aj8yqAN8o1FYEZRekC2BtENyBRK7LhFxw3Czqp9KwlKrXawQa7pcB_m51EIlPmj_fiYrvsh-_gX8xawiQ",
+          code: 'erDiagram\n\n    CashBookCategory {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string name\n\n        string type\n\n        bool is_system\n\n    }\n\n    CashBookEntry {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần → platform.Branch"\n\n        uuid shift_id "id trần → commerce.Shift, nullable"\n\n        uuid category_id FK\n\n        string type\n\n        decimal amount\n\n        string related_type "nullable"\n\n        uuid related_id "FK mềm, nullable"\n\n        string counterparty_type "nullable"\n\n        uuid counterparty_id "nullable"\n\n        string note\n\n        uuid created_by "id trần"\n\n        datetime created_at\n\n    }\n\n    CustomerDebtLedger {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid customer_id "id trần → commerce.Customer"\n\n        uuid order_id "id trần, nullable"\n\n        string type\n\n        decimal amount\n\n        decimal balance_after\n\n        string note\n\n        datetime created_at\n\n    }\n\n    SupplierDebtLedger {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid supplier_id "id trần → commerce.Supplier"\n\n        uuid purchase_order_id "id trần, nullable"\n\n        string type\n\n        decimal amount\n\n        decimal balance_after\n\n        datetime created_at\n\n    }\n\n    ShippingProvider {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string type\n\n        string name\n\n        string status\n\n    }\n\n    Shipment {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid order_id UK "id trần → commerce.Order"\n\n        uuid provider_id FK\n\n        string tracking_code\n\n        decimal cod_amount\n\n        decimal shipping_fee\n\n        string fee_payer\n\n        string status\n\n        datetime created_at\n\n        datetime delivered_at\n\n    }\n\n    ShipmentStatusHistory {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid shipment_id FK\n\n        string old_status\n\n        string new_status\n\n        uuid changed_by "id trần, nullable"\n\n        datetime changed_at\n\n    }\n\n    ShippingProviderDebtLedger {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid provider_id FK\n\n        uuid shipment_id FK "nullable"\n\n        string type\n\n        decimal amount\n\n        decimal balance_after\n\n        datetime created_at\n\n    }\n\n    CashBookCategory ||--o{ CashBookEntry : categorizes\n\n    ShippingProvider ||--o{ Shipment : fulfills\n\n    Shipment ||--o{ ShipmentStatusHistory : "tracked by"\n\n    ShippingProvider ||--o{ ShippingProviderDebtLedger : has\n\n    Shipment ||--o{ ShippingProviderDebtLedger : triggers',
+        },
+        {
+          name: "Integration",
+          url: "https://mermaid.live/edit#pako:eNq9VlFr2zAQ_itGz2mhfRnLa7fBNsrKCnsyiIt0SdTIkjmdsoQ0_31y7KSZo3Qua2uMEb7vdLrvO520EcprFGOB9MnAjKAqXemK9NzMwTm0Nz59FRvvis3e1DwxGl2k9-77yV9GB45lGn05Nap22sZaigZMZbxC-OCKMl5ffbwulK8qJIWX92AxdKsoxfFEgcm4WVGTXxqNlDHhipEcWBnmvk6xMhBQCkOQ7BfoJDpF65oxByScEob5c0gNjGwqLDrMqjbJRQJnpgsMHEPW20JgGdZO5T13ZiTylPVWhGmoe74Hc6x1z7zdD-4X8RbquonxOhofauYMYAlkOvczRQAM1s8u78jrqPhXi89WwUFqw1jlpX6qhkUcgGh2RAZTtRTJ4GMqz5cp-x_apHL45idvL0yXxIOfSF7Xf-X3ELybFDWsrQc9KHHjuABOgtSc6IyO-8YKVrID5BlzSRJJyLR-i82QVkzPmKfGmTDPC_LVTfzq8xJTEu-lyaE6sQl7poJ3prxyBL_lS9Q78JA6bNMkT4jax2zol1VCwAyzExAqNMs8kV1r_0Gphf_E6fuz6ZvIPTbbuK6H-NdRtcthVLhoLUwsZvvUKc2dYQrGRsJU7JDUGqzeK_SW0yP-8fHiwm-OD4Rxyv0pn_MeXZsaCD_aRAM9-tXSuomRSApUYLQYbwTPsWruMhqnEC2L7UhAZN-sTYyZIo5Ey0Z31dn_RG3Y0217Edrdh7Z_AJGo98g",
+          code: 'erDiagram\n\n    ChannelConnection {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid channel_id "id trần → commerce.SalesChannel"\n\n        string provider\n\n        string external_shop_id\n\n        string access_token_encrypted\n\n        string refresh_token_encrypted\n\n        datetime token_expires_at\n\n        string status\n\n        datetime last_sync_at\n\n        string last_error\n\n        datetime created_at\n\n        datetime updated_at\n\n    }\n\n    SkuMapping {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid connection_id FK\n\n        uuid variant_id "id trần → catalog.ProductVariant"\n\n        string external_item_id\n\n        string external_sku_id\n\n        string external_sku_code\n\n        string mapping_source\n\n        string status\n\n        datetime created_at\n\n        datetime updated_at\n\n    }\n\n    SyncJob {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid connection_id FK\n\n        string job_type\n\n        jsonb payload\n\n        string status\n\n        int attempt_count\n\n        int max_attempts\n\n        datetime next_retry_at\n\n        string last_error\n\n        datetime created_at\n\n        datetime started_at\n\n        datetime finished_at\n\n    }\n\n    InboxEvent {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid connection_id FK\n\n        string external_event_id\n\n        string event_type\n\n        jsonb raw_payload\n\n        string status\n\n        datetime processed_at\n\n        string error_message\n\n        datetime received_at\n\n    }\n\n    ChannelOrderRef {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid connection_id FK\n\n        string external_order_id\n\n        uuid internal_order_id "id trần → commerce.Order, nullable"\n\n        string status\n\n        string failure_reason\n\n        jsonb raw_payload\n\n        datetime created_at\n\n        datetime updated_at\n\n    }\n\n    ChannelConnection ||--o{ SkuMapping : ""\n\n    ChannelConnection ||--o{ SyncJob : ""\n\n    ChannelConnection ||--o{ InboxEvent : ""\n\n    ChannelConnection ||--o{ ChannelOrderRef : ""',
+        },
+        {
+          name: "Insight",
+          url: "https://mermaid.live/edit#pako:eNq9Vk1v2zAM_SuCz2mB9jIst21dgWEfKJauJwMCI9OJOn1kEhXASPvfJ8V2ECfy2q5BjRwUkaL43iMlbQphKyymBborCQsHujSlYfG7AqmaGSj0s6A1uIZtelP6QpAVi7-br0ezhAYM8Ti6PjbOHRixTMaySL6uDBcI7wwrw-XF-0u2UkC1dfr849axLI4iiCUYg2o8hLBaoxN4vs3-U-s-DFQBIfMtLp7-7BulIWZdhY4LGwwN1qGQGhQjS6C4wzWagOMOlfRPhBDWZ60LZ73nK2drSYeJk9TIwioNKw4782M_uHG2CoLeTruMSGtwsgs0IhJE-HZx3iV71_q_QKWeqT8hrpPUcG9V9Qqt9pXYUfnFxFVkXXMHKuDMwMovLb0lmy0H3cbZUm3T72kYB7hOEI4Q_rAkaxnVkNa8GpcnJ82CUbPC3LQklZuf26rJTDuseYoU6TFBKZjHxceFlry2FP7DZ4zpCcsv2jWZcDjWZPu8_Yw8r2QslNMUhtkLPeLiCer6GYfoLPkNwc2tVUz62BBQZUEnQw7xFa6lwFv7G81pcI6AGKbbFUMtNKft1r9yFdcDzgEFQXKNWagKPPHgBwo_twA-63hB3qJOW-N_ETJatB2odDPn4fowv0dBI73El6TV00wMkXyzi5O1f0cKTwBydssxbZkDRkDB5wR2di3TlazRe1hg3Dzjhc7ZncvhOQmUEqPMpT6u9sDsY4fnKuFDqCSdkL8oU0RxeIhuV7amZx9kPavoUutyAxrz-8WTJkdne7FmM-lsQxnuvTVzNsfYipjuKjg2Qk1RxUNbXxkOxKG0Lz2M2cPD2ZndjBzQ08hc0jEWYVkUkyI-FGMpVsV0U9ASdXoJV1hDUFQ8TgoIZGeNEcWUXMBJ0T66uodyP4lRfeu-t8_o7Wv68S9bDp_a",
+          code: 'erDiagram\n\n    DailySalesSummary {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần → platform.Branch"\n\n        uuid channel_id "id trần → commerce.SalesChannel"\n\n        date summary_date\n\n        int order_count\n\n        decimal total_revenue\n\n        decimal total_discount\n\n        decimal total_cost\n\n        decimal gross_profit\n\n        datetime updated_at\n\n    }\n\n    ProductSalesSummary {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần"\n\n        uuid variant_id "id trần → catalog.ProductVariant"\n\n        date summary_date\n\n        decimal quantity_sold\n\n        decimal total_revenue\n\n        decimal total_cost\n\n    }\n\n    InventoryValueSnapshot {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid branch_id "id trần"\n\n        date snapshot_date\n\n        int total_quantity\n\n        decimal total_value\n\n    }\n\n    Notification {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string type\n\n        string title\n\n        string body\n\n        string ref_type "nullable"\n\n        uuid ref_id "nullable"\n\n        uuid branch_id "id trần, nullable"\n\n        datetime created_at\n\n    }\n\n    NotificationRecipient {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid notification_id FK\n\n        uuid staff_id "id trần → platform.Staff"\n\n        bool is_read\n\n        datetime read_at\n\n    }\n\n    DeviceToken {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        uuid staff_id "id trần"\n\n        string fcm_token UK\n\n        string platform\n\n        bool is_active\n\n        datetime last_used_at\n\n        datetime created_at\n\n    }\n\n    EmailTemplate {\n\n        uuid id PK\n\n        uuid tenant_id FK "nullable"\n\n        string code UK\n\n        string subject\n\n        string body_html\n\n        bool is_active\n\n    }\n\n    EmailLog {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string template_code\n\n        string to_email\n\n        string status\n\n        string provider_message_id\n\n        string error_message\n\n        int attempt_count\n\n        datetime created_at\n\n        datetime sent_at\n\n    }\n\n    AuditLog {\n\n        uuid id PK\n\n        uuid tenant_id FK\n\n        string actor_type\n\n        uuid actor_id "id trần, nullable"\n\n        string service_name\n\n        string action\n\n        string entity_type\n\n        uuid entity_id\n\n        jsonb before_data\n\n        jsonb after_data\n\n        string trace_id\n\n        datetime created_at\n\n    }\n\n    Notification ||--o{ NotificationRecipient : "sent to"',
+        },
+      ];
+      const bs = [...document.querySelectorAll("button")];
+      function show(i) {
+        const d = data[i];
+        document.getElementById("title").textContent = d.name;
+        document.getElementById("code").textContent = d.code;
+        document.getElementById("frame").src = d.url.replace(
+          "/edit#",
+          "/view#",
+        );
+        document.getElementById("open").href = d.url;
+        bs.forEach((b, j) => b.classList.toggle("active", j === i));
+        location.hash = i;
+      }
+      bs.forEach((b, i) => (b.onclick = () => show(i)));
+      show(
+        Math.max(
+          0,
+          Math.min(data.length - 1, Number(location.hash.slice(1)) || 0),
+        ),
+      );
+    </script>
+  </body>
+</html>

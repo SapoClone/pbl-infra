@@ -1,0 +1,52 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'docs/*.html'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One Pages deployment at a time; let a running deployment finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Publish only the standalone HTML pages. docs/superpowers (specs and
+      # plans) is intentionally left out of the public site.
+      - name: Stage static pages
+        run: |
+          mkdir -p _site
+          cp docs/*.html _site/
+          test -f _site/index.html
+          test -f _site/architecture.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
