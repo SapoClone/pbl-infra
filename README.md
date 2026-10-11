@@ -288,7 +288,8 @@ pnpm migration:up
 |---|---|---|---|
 | `DATABASE_PASSWORD` | pbl-api | Neon dashboard | SSM `SecureString` → ECS task `secrets` |
 | `REDIS_PASSWORD` | pbl-api | Upstash Redis dashboard | SSM `SecureString` → ECS task `secrets` |
-| `AUTH_JWT_SECRET` / `AUTH_REFRESH_SECRET` / `AUTH_FORGOT_SECRET` / `AUTH_CONFIRM_EMAIL_SECRET` | pbl-api | Generated (`openssl rand -base64 32`) | SSM `SecureString` → ECS task `secrets` |
+| `AUTH_JWT_PRIVATE_KEY` | pbl-api | Generated: `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \| base64 -w0` (base64 PEM RSA key; the key id `AUTH_JWT_KEY_ID` is a plain ECS env var, not a secret) | SSM `SecureString` → ECS task `secrets` |
+| `AUTH_FORGOT_SECRET` / `AUTH_CONFIRM_EMAIL_SECRET` | pbl-api | Generated (`openssl rand -base64 32`) | SSM `SecureString` → ECS task `secrets` |
 | `OBSERVE_APP_KEY` / `OBSERVE_APP_SECRET` | pbl-api (SSM), pbl-mail-service (plain Lambda env — no SSM-backed `secrets` block exists for Lambda) | observe.nestjs.com project | pbl-api: SSM; pbl-mail-service: Lambda environment variable |
 | `RESEND_API_KEY` | pbl-mail-service | Resend dashboard | Lambda environment variable |
 | `AWS_DEPLOYER_ROLE_ARN` (× 2) | GitHub Actions (per repo) | Terraform output, no secret value — a role ARN, not a credential | Repo *variable*, not secret |
