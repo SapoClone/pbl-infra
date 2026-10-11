@@ -14,8 +14,7 @@ locals {
   pbl_api_secrets = {
     DATABASE_PASSWORD         = var.database_password
     REDIS_PASSWORD            = var.redis_password
-    AUTH_JWT_SECRET           = var.auth_jwt_secret
-    AUTH_REFRESH_SECRET       = var.auth_refresh_secret
+    AUTH_JWT_PRIVATE_KEY      = var.auth_jwt_private_key
     AUTH_FORGOT_SECRET        = var.auth_forgot_secret
     AUTH_CONFIRM_EMAIL_SECRET = var.auth_confirm_email_secret
     OBSERVE_APP_KEY           = var.observe_app_key
