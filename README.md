@@ -56,6 +56,42 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
                          publishes on send-mail ──────────▶ SQS queue "email-verification" ┘
 ```
 
+## Target service topology (eight services)
+
+The API is not one service. pbl-api is a monorepo of eight services behind a
+KrakenD gateway ([ADR-0010](https://github.com/SapoClone/pbl-api/blob/main/docs/decisions/0010-eight-services.md)):
+open `docs/architecture.html` (published to GitHub Pages) for the diagram and
+`docs/erd_viewer.html` for the tables each service owns.
+
+| Service | Gateway path | Postgres schema | Provisioned by this Terraform |
+|---|---|---|---|
+| `platform` | `/platform/*` | `platform` | yes, as the service named `pbl-api` |
+| `catalog` | `/catalog/*` | `catalog` | no |
+| `inventory` | `/inventory/*` | `inventory` | no |
+| `sales` | `/sales/*` | `sales` | no |
+| `customer` | `/customer/*` | `customer` | no |
+| `finance` | `/finance/*` | `finance` | no |
+| `integration` | `/integration/*` | `integration` | no |
+| `insight` | `/insight/*` | `insight` | no |
+
+What is in this repo today is the single-service deployment described above.
+Deploying the target topology needs the following, none of which exists yet:
+
+- one ECR repository and one ECS service per service (the `Dockerfile` of pbl-api
+  already builds any of them with `--build-arg APP_NAME=<service>`, but its
+  `deploy.yml` still pushes only `platform`);
+- the KrakenD gateway as the public entry point instead of the ALB pointing at
+  `pbl-api`, with an https JWKS URL;
+- one Neon project with the eight schemas (and, as a target, one database role
+  per service limited to its schema);
+- the SNS/SQS event bus: a topic per producer, a queue and DLQ per consumer, with
+  retry and redrive ([ADR-0007](https://github.com/SapoClone/pbl-api/blob/main/docs/decisions/0007-event-bus.md));
+- the `AUTH_JWT_PRIVATE_KEY` signing key for `platform` (see the open
+  `fix/p0-deploy-config` change) and `AUTH_JWKS_URL` for every other service.
+
+The AWS resources are currently destroyed to save credits; the Terraform is kept
+and re-applied when a deployment is needed.
+
 ## Domain & HTTPS
 
 - `pbl-api` is reachable at `https://api.sapo.makeasy.id.vn` (HTTP on
