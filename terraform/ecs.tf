@@ -65,13 +65,16 @@ module "pbl_api" {
     AUTH_FORGOT_TOKEN_EXPIRES_IN        = "7d"
     AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN = "1d"
     APP_SWAGGER_ENABLED                 = "true"
+    APP_URL                             = "https://api.${var.domain_name}"
+    AUTH_JWT_KEY_ID                     = "prod-1"
+    AUTH_JWT_ISSUER                     = "platform"
+    AUTH_JWT_AUDIENCE                   = "pbl6"
   }
 
   secrets = {
     DATABASE_PASSWORD         = aws_ssm_parameter.pbl_api["DATABASE_PASSWORD"].arn
     REDIS_PASSWORD            = aws_ssm_parameter.pbl_api["REDIS_PASSWORD"].arn
-    AUTH_JWT_SECRET           = aws_ssm_parameter.pbl_api["AUTH_JWT_SECRET"].arn
-    AUTH_REFRESH_SECRET       = aws_ssm_parameter.pbl_api["AUTH_REFRESH_SECRET"].arn
+    AUTH_JWT_PRIVATE_KEY      = aws_ssm_parameter.pbl_api["AUTH_JWT_PRIVATE_KEY"].arn
     AUTH_FORGOT_SECRET        = aws_ssm_parameter.pbl_api["AUTH_FORGOT_SECRET"].arn
     AUTH_CONFIRM_EMAIL_SECRET = aws_ssm_parameter.pbl_api["AUTH_CONFIRM_EMAIL_SECRET"].arn
     OBSERVE_APP_KEY           = aws_ssm_parameter.pbl_api["OBSERVE_APP_KEY"].arn

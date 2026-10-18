@@ -69,14 +69,10 @@ variable "redis_password" {
 
 # --- pbl-api: auth secrets ---------------------------------------------
 
-variable "auth_jwt_secret" {
-  type      = string
-  sensitive = true
-}
-
-variable "auth_refresh_secret" {
-  type      = string
-  sensitive = true
+variable "auth_jwt_private_key" {
+  description = "Base64 of a PEM RSA private key (2048-bit) that signs pbl-api access tokens (RS256). Generate: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | base64 -w0"
+  type        = string
+  sensitive   = true
 }
 
 variable "auth_forgot_secret" {
