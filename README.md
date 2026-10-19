@@ -84,8 +84,8 @@ Deploying the target topology needs the following, none of which exists yet:
   `pbl-api`, with an https JWKS URL;
 - one Neon project with the eight schemas (and, as a target, one database role
   per service limited to its schema);
-- the SNS/SQS event bus: a topic per producer, a queue and DLQ per consumer, with
-  retry and redrive ([ADR-0007](https://github.com/SapoClone/pbl-api/blob/main/docs/decisions/0007-event-bus.md));
+- the SNS/SQS event bus (it runs locally on ElasticMQ and has never run on AWS): a topic per
+  producer, a queue and DLQ per consumer, with retry and redrive ([ADR-0007](https://github.com/SapoClone/pbl-api/blob/main/docs/decisions/0007-event-bus.md));
 - the `AUTH_JWT_PRIVATE_KEY` signing key for `platform` (see the open
   `fix/p0-deploy-config` change) and `AUTH_JWKS_URL` for every other service.
 
