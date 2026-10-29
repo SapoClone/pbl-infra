@@ -99,3 +99,24 @@ output "image_cdn_cname" {
     Value: ${aws_cloudfront_distribution.images.domain_name}
   EOT
 }
+
+output "microservice_ecr_urls" {
+  description = "Per-service ECR repository URLs when enable_microservices_topology is true."
+  value       = { for k, v in module.microservice_ecr : k => v.url }
+}
+
+output "service_sns_topic_arns" {
+  description = "Per-producer SNS topic ARNs when enable_microservices_topology is true."
+  value       = { for k, v in aws_sns_topic.service_events : k => v.arn }
+}
+
+output "service_sqs_queue_urls" {
+  description = "Per-consumer SQS queue URLs when enable_microservices_topology is true."
+  value       = { for k, v in module.service_event_queues : k => v.url }
+}
+
+output "service_sqs_dlq_arns" {
+  description = "Per-consumer SQS dead-letter queue ARNs when enable_microservices_topology is true."
+  value       = { for k, v in module.service_event_queues : k => v.dlq_arn }
+}
+
