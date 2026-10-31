@@ -174,17 +174,17 @@
 
   <section id="at-a-glance">
     <h2>At a glance</h2>
-    <p class="verdict">The backend is far ahead of everything else. It can serve <b>most of the tenant web screens and all of the mobile screens</b> today. The web app shows made-up data on four screens, has placeholders on five and nothing on eight; the mobile app does not exist yet. Three feature areas have <b>no backend at all</b>: platform admin, marketplace channels and email flows.</p>
+    <p class="verdict"><b>Open pull request, not yet on main:</b> <a href="https://github.com/SapoClone/pbl-api/pull/22">pbl-api #22</a> adopts the six services another contributor built (catalog, inventory, sales, customer, finance, integration), puts them under our permission model and integer-VND money, and adds the screen endpoints they lacked. All 13 CI checks pass. Everything below says whether a number is <b>on main today</b> or <b>in #22</b>. The backend is far ahead of everything else. It can serve <b>most of the tenant web screens and all of the mobile screens</b> today. The web app shows made-up data on four screens, has placeholders on five and nothing on eight; the mobile app does not exist yet. Three feature areas have <b>no backend at all</b>: platform admin, marketplace channels and email flows.</p>
     <div class="tiles">
       <div class="tile">
-        <div class="num">165</div>
-        <p class="what">API routes live on <code>main</code>, in 6 services</p>
-        <p class="src">174 gateway entries with health checks · krakend.json @ d437b69</p>
+        <div class="num">165<small> → 368</small></div>
+        <p class="what">API routes: 165 on <code>main</code> in 6 services, 368 in 8 services once #22 merges</p>
+        <p class="src">378 gateway entries with health checks · krakend.json @ 0af0275 (#22)</p>
       </div>
       <div class="tile">
         <div class="num">8<small> of 18</small></div>
         <p class="what">tenant web screens whose APIs are fully ready; 8 more are partly ready</p>
-        <p class="src">screen table below · contracts in docs/specs/2026-10-28</p>
+        <p class="src">on main today; #22 raises this (see "What is missing") · contracts in docs/specs/2026-10-28</p>
       </div>
       <div class="tile">
         <div class="num">1<small> of 18</small></div>
@@ -206,7 +206,7 @@
       <table>
         <thead><tr><th>Repository</th><th>State</th><th>What stands out</th></tr></thead>
         <tbody>
-          <tr><td><b>pbl-api</b><span class="id">main d437b69 · 31 Oct</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>Six services have real logic (platform, catalog, customer, inventory, sales, insight); finance and integration answer only a health check. Roles, permissions and branch scope are built. CI is green. Six open pull requests from the M1 to M6 work (#12 to #17) <b>conflict with main</b>.</td></tr>
+          <tr><td><b>pbl-api</b><span class="id">main d437b69 · 31 Oct · #22 at 0af0275</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>On main, six services have real logic; finance and integration answer only a health check. Open <a href="https://github.com/SapoClone/pbl-api/pull/22">#22</a> (13 of 13 checks green) makes all eight real. The older M1 to M6 pull requests (#12 to #17) conflict with main and are superseded by #22. M7 (#20) and M7.5 (#21) are rebased onto it and pass the same checks locally.</td></tr>
           <tr><td><b>pbl-web</b><span class="id">main 06e9b70 · 27 Oct</span></td><td><span class="badge partial"><span class="g">◐</span>Shell only</span></td><td>Sign-in, register and forgot-password call the real API. Dashboard, products, inventory and orders show hard-coded data; customers, POS, channels, suppliers and staff are placeholders. No admin portal. The theme tokens are blue while the pages hard-code green, and the Vietnamese strings are not in a locale file.</td></tr>
           <tr><td><b>pbl-mobile</b><span class="id">main 6253bec · 29 Aug</span></td><td><span class="badge missing"><span class="g">○</span>Template</span></td><td>An untouched Flutter template: one placeholder page, a sign-in path that does not exist on the gateway, the template app id, a purple palette and no Vietnamese locale.</td></tr>
           <tr><td><b>pbl-infra</b><span class="id">main bc935d8 · 19 Oct</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Terraform deploys only the platform service, and the AWS resources were deleted to save credits. Two pull requests are open: #6 (ERD changes for the design) and #5 (ECS definitions and messaging for the microservices).</td></tr>
@@ -305,33 +305,34 @@
 
   <section id="have">
     <h2>What the backend gives us today</h2>
-    <p class="lede">All of it is on <code>main</code>, behind the gateway, with permissions and branch scope on every route.</p>
+    <p class="lede">Route counts are gateway entries without health checks. Every route in both columns sits behind the gateway with permissions; branch scope applies where a service has branches.</p>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Service</th><th class="num">Routes</th><th>What it does</th></tr></thead>
+        <thead><tr><th>Service</th><th class="num">On main</th><th class="num">In #22</th><th>What it does</th></tr></thead>
         <tbody>
-          <tr><td><b>platform</b></td><td class="num">47</td><td>Sign-in, refresh, sessions, login lockout; stores and branches; members with lock, unlock and removal; <b>roles, a 38-permission catalog, branch assignment</b>; branch settings; staff schedules; the context call a frontend uses to build its menus</td></tr>
-          <tr><td><b>catalog</b></td><td class="num">22</td><td>Products with variants (SKU and barcode unique per store), variant lookup for the till, categories, brands, attributes, channel listing, summary, CSV export</td></tr>
-          <tr><td><b>customer</b></td><td class="num">19</td><td>Customers with readable codes, groups, tags, addresses, loyalty points and settings; spend and points update from completed orders; phone hidden without permission</td></tr>
-          <tr><td><b>inventory</b></td><td class="num">40</td><td>Stock per branch, thresholds, ledger, summary, lookup, export; suppliers; purchase orders with VAT, approval and payments; transfers, stock takes and issues that write the ledger</td></tr>
-          <tr><td><b>sales</b></td><td class="num">22</td><td>Orders from draft to complete or cancel with history, payments and print data; shifts with cash reconciliation; registers; channels; shipping providers; summary and export</td></tr>
-          <tr><td><b>insight</b></td><td class="num">15</td><td>Dashboard KPIs, hourly, by-channel, top-product and by-branch summaries, report export, store-wide notifications, device tokens, attention feed, audit log</td></tr>
-          <tr><td><b>finance</b>, <b>integration</b></td><td class="num">0</td><td class="muted">Health check only. Full implementations exist in the open pull requests #16 and #17, not on main.</td></tr>
-        </tbody>
+          <tr><td><b>platform</b></td><td class="num">47</td><td class="num">47</td><td>Sign-in, refresh, sessions, login lockout; stores and branches; members with lock, unlock and removal; <b>roles, a permission catalog (42 codes in #22), branch assignment</b>; branch settings; staff schedules; the context call a frontend uses to build its menus</td></tr>
+          <tr><td><b>catalog</b></td><td class="num">22</td><td class="num">50</td><td>Products with variants, categories, brands, attributes, channel listing, price lists. #22 adds the variant picker, summary, CSV export, image uploads and CSV imports</td></tr>
+          <tr><td><b>customer</b></td><td class="num">19</td><td class="num">45</td><td>Customers, groups, tags, addresses, loyalty points and settings, membership tiers, import and export; phone hidden without permission</td></tr>
+          <tr><td><b>inventory</b></td><td class="num">40</td><td class="num">59</td><td>Warehouses and stock per branch, thresholds, ledger, suppliers, purchase orders, transfers, stock takes, issues. #22 adds the receipt approval flow, stock views and exports, and a below-minimum event</td></tr>
+          <tr><td><b>sales</b></td><td class="num">22</td><td class="num">63</td><td>Orders with the pack, ship and complete steps, payments, returns, promotions, POS shifts and registers, channels, shipping providers, summary, export and print data; a checkout saga that holds stock first</td></tr>
+          <tr><td><b>insight</b></td><td class="num">15</td><td class="num">15</td><td>Dashboard KPIs, summaries, report export, notifications, attention feed, audit log. In the rebased M7 pull request (#20) the other contributor's larger insight service replaces it, with our notifications, audit log and dashboard routes ported in; it adds 24 routes</td></tr>
+          <tr><td><b>finance</b></td><td class="num">0</td><td class="num">60</td><td>Cashbook, journals, receivables and payables, credit limits, refunds, COD and settlements, reconciliation</td></tr>
+          <tr><td><b>integration</b></td><td class="num">0</td><td class="num">29</td><td>Marketplace connections, SKU mapping, sync jobs, conflicts, webhooks. Live marketplace calls are off by default and have not been run against a real marketplace</td></tr>
+          </tbody>
       </table>
     </div>
 
     <h3>How it was checked</h3>
     <div class="two">
       <div class="box"><ul>
-        <li><b>CI:</b> 13 of 13 checks passed on the combined change (lint, libraries, every service's build and test, integration, docs).</li>
-        <li><b>Unit tests:</b> 1,410 pass. Two tests of an internal HTTP client fail on the local machine only; they pass in CI.</li>
-        <li><b>Integration tests</b> against real Postgres and the event queue: 210 pass.</li>
+        <li><b>#22 CI:</b> 13 of 13 checks passed (lint, libraries, every service's build and test, integration, docs).</li>
+        <li><b>Unit tests on #22:</b> about 2,200 pass in the eight services and libraries. Two tests of an internal HTTP client fail on this machine (a token appears in hidden async internals on Node 22); not confirmed whether they fail on main.</li>
+        <li><b>Integration tests</b> against real Postgres and the event queue: 14 suites, 241 tests, plus 63 for sales after the last fixes.</li>
       </ul></div>
       <div class="box"><ul>
-        <li><b>End to end through the real gateway:</b> the first-wave script runs 248 checks and the permissions script 142; the event and stack scripts pass.</li>
-        <li><b>Gateway config:</b> KrakenD accepts all 174 entries, and every controller route is declared there.</li>
-        <li>These ran on the branch before the squash merge; <code>main</code> has the same content (0 files differ).</li>
+        <li><b>End to end through the real gateway on a fresh stack:</b> the three demo scripts pass with 264, 178 and 85 checks, and the stack check passes.</li>
+        <li><b>Found by booting the stack, now fixed in #22:</b> the gateway crashed on duplicate path parameter names; sales sent no tenant to inventory and keyed stock by SKU code; catalog had no event settings.</li>
+        <li>Main has the earlier checks: 165 routes, 13 of 13 CI checks, 248 and 142 end-to-end checks.</li>
       </ul></div>
     </div>
   </section>
@@ -352,7 +353,7 @@
         </tbody>
       </table>
     </div>
-    <p class="src" style="margin-top:10px">There is no machine-readable spec yet: only the platform service serves OpenAPI (<code>/api-docs</code>). Catalog, customer, inventory, sales and insight have none, so a typed client has to be written from the documents above.</p>
+    <p class="src" style="margin-top:10px"><b>After #22 merges:</b> the contract files describe the screens; the reports <code>docs/specs/2026-11-01-adopt-m1-m6/phase-4-*.md</code> list, per service, the routes that were added and the places where the built shape differs from the contract. Follow the report where they differ. There is no machine-readable spec yet: only the platform service serves OpenAPI (<code>/api-docs</code>). Catalog, customer, inventory, sales and insight have none, so a typed client has to be written from the documents above.</p>
   </section>
 
   <section id="missing">
@@ -364,7 +365,7 @@
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
         <tr><td><b>Web and mobile clients</b></td><td>Nothing in the design is usable until a client shows it. The web app has one screen on a real API (sign-in); the mobile app is a template. Frontend work needs the API client, theme tokens, the Vietnamese locale and the top bar first.</td><td><span class="size">L</span></td></tr>
-        <tr><td><b>Direction on pull requests #12 to #17</b></td><td>Another contributor built catalog, inventory, sales, customer, finance and integration in parallel. Four of those overlap services now on main, and all six conflict with it. They need a decision on which API shape wins and who ports what.</td><td><span class="size">decision</span></td></tr>
+        <tr><td><b>Merge #22, then M7 and M7.5</b></td><td>#22 settles the overlap: the other contributor's six services are the base. Their M7 (insight, #20) and M7.5 (architecture hardening, #21) are rebased onto it, one on top of the other, and will show as conflicting with main until #22 lands. Merge in this order, each with a merge commit rather than a squash: #22, then #20, then #21. #12 to #17 then close as merged.</td><td><span class="size">decision</span></td></tr>
       </tbody>
     </table></div>
 
@@ -373,7 +374,7 @@
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
         <tr><td><b>Platform admin</b></td><td>23 screens with no identity, routes or monitoring data; 51 endpoints are designed. Needs its own login, cross-store reads and support sessions.</td><td><span class="size">L</span></td></tr>
-        <tr><td><b>Marketplace channels</b></td><td>Two web screens and the admin integration views. The integration service is a stub; the version in #17 simulates the marketplaces and needs changes before it can land.</td><td><span class="size">L</span></td></tr>
+        <tr><td><b>Marketplace channels</b></td><td>Two web screens and the admin integration views. The integration service exists in #22 (connections, mapping, sync, conflicts), but live Shopee and Lazada calls are off by default and untested against a real marketplace.</td><td><span class="size">L</span></td></tr>
         <tr><td><b>Email flows</b></td><td>Staff invitations, forgot and reset password, email verification. The mail service has one template, so real users cannot be onboarded.</td><td><span class="size">M</span></td></tr>
       </tbody>
     </table></div>
@@ -382,10 +383,10 @@
     <div class="tablewrap"><table>
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
-        <tr><td><b>Stock receipts and purchase-order receiving</b></td><td>Receipts apply at once; there is no draft, approval, lot or expiry, and goods cannot be received against an order. Average cost and stock value are also missing.</td><td><span class="size">M</span></td></tr>
-        <tr><td><b>Returns and refunds</b></td><td>Orders can be cancelled before completion; completed orders cannot be returned.</td><td><span class="size">M</span></td></tr>
-        <tr><td><b>Events for new transitions</b></td><td>Only branch, sign-in, membership and order-completed events exist. Order confirmation, stock below minimum and receipts emit nothing, so the attention feed stays empty and push notifications have no source.</td><td><span class="size">M</span></td></tr>
-        <tr><td><b>Image upload and imports</b></td><td>Product images, product and customer file import, and push sending are all unbuilt.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Purchase orders and receipts, rest of the flow</b></td><td>On main, receipts apply at once. #22 adds the receipt approval flow and average cost. Still missing in #22: editing and submitting a purchase order, VAT and payments, patching a receipt, and issue submission.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Shipping address on orders</b></td><td>#22 has returns, refunds, payments and the pack, ship and complete steps, but orders do not store a recipient or address, so the print view has none.</td><td><span class="size">S</span></td></tr>
+        <tr><td><b>Order costs and gross profit</b></td><td>The sales catalog projection carries no unit cost, so the cost and gross profit figures stay empty even in #22.</td><td><span class="size">S</span></td></tr>
+        <tr><td><b>Image storage and import queue</b></td><td>#22 builds uploads and CSV imports with a local-disk adapter; real object storage and a queue (imports run inside the service and stop on a restart) are not built. Push sending is unbuilt.</td><td><span class="size">M</span></td></tr>
       </tbody>
     </table></div>
 
@@ -394,7 +395,7 @@
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
         <tr><td><b>Production deployment</b></td><td>Terraform deploys only the platform service and the AWS resources are deleted. No gateway, no other services, and the event transport was never run on AWS.</td><td><span class="size">L</span></td></tr>
-        <tr><td><b>Database isolation</b></td><td>Every service connects as the database superuser. Row-level security and per-service roles exist only in the open M1 to M6 work, and applying them needs an audit of raw SQL.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Database isolation</b></td><td>Every service still connects as the database superuser, which skips row-level security. #22 brings the policies and per-service roles from the other work, but they only take effect once services connect as their own role, and that needs an audit of raw SQL.</td><td><span class="size">M</span></td></tr>
         <tr><td><b>Token lifetime</b></td><td>Access tokens last a day, so a role or permission change reaches a member late. The web client has no refresh logic yet.</td><td><span class="size">S</span></td></tr>
         <tr><td><b>Rate limiting</b></td><td>None, although the security notes describe it.</td><td><span class="size">S</span></td></tr>
       </tbody>
@@ -413,11 +414,11 @@
   <section id="decide">
     <h2>Decisions that need people</h2>
     <ol class="decide">
-      <li><b>Which API shape does the frontend build against?</b> The contracts written for the Figma screens (what main follows), or the shapes in the M1 to M6 documents. The comparison recommends the contracts: main matches most of each service's contract endpoints (20 of 21 for sales, 39 of 46 for inventory, 17 of 20 for catalog, 16 of 19 for customer), while the other work matches none of them exactly.</li>
-      <li><b>Who ports what, and in which order</b> from the M1 to M6 work into main: row-level security and events first, then inventory cost and receipts, then returns and price lists.</li>
-      <li><b>When to switch to row-level security</b> and per-service database roles. It needs an audit of the raw SQL first.</li>
-      <li><b>Money and quantity types:</b> integer VND as the repository rule says, or decimal strings as in the other work.</li>
-      <li><b>Scope:</b> are price lists, promotions, customer tiers, holds and the checkout saga needed now, or after the screens work?</li>
+      <li><b>Merge pbl-api #22</b> with a merge commit. It replaces the earlier decision on API shape: the other contributor's stack is the base, and our screen contracts are served additively on top. Clients of the old shapes break: money is a number, and access is by permission.</li>
+      <li><b>Review the defaults in #22:</b> warehouse staff cannot post receipts (needs the approve permission); creating promotions and coupons needs the order approve permission; role changes reach a member at the next token refresh.</li>
+      <li><b>M7 insight replaces our insight</b> (decided), and M7.5 follows it. Review the port in #20 and the platform, sales and inventory domain changes in #21: the platform role type became a free string, and impossible order, payment and fulfilment combinations now fail loudly.</li>
+      <li><b>When to switch to per-service database roles</b>, which turns row-level security on. It needs an audit of the raw SQL first.</li>
+      <li><b>Scope:</b> shipping address on orders, purchase-order editing and payments, and real object storage: now or after the screens work?</li>
       <li><b>Merge pbl-infra #6</b> (the ERD changes for the design), and decide what happens to #5.</li>
     </ol>
   </section>
@@ -426,10 +427,12 @@
     <h2>Risks to know about</h2>
     <div class="two">
       <div class="box">
-        <h3>In the unmerged M1 to M6 work</h3>
+        <h3>In open PR #22</h3>
         <ul>
-          <li>Review findings on this work, security among them, go to its author directly and are not listed on this public page.</li>
-          <li>Only the pull-request title check ran on all six pull requests; their tests are unverified.</li>
+          <li>Services still connect as the database superuser, so row-level security does not protect anything yet.</li>
+          <li><code>POST /orders/omnichannel</code> ignores the idempotency header: a retry that lacks the same connection and external order id creates a second order.</li>
+          <li>Finance's provider webhook is not routed through the gateway, because a provider callback cannot carry our token.</li>
+          <li>Local test setups must be rebuilt with <code>docker compose down -v</code>: the schema changed in place.</li>
         </ul>
       </div>
       <div class="box">
@@ -437,7 +440,7 @@
         <ul>
           <li>Tokens issued before the permissions change give non-owners a 403 until they sign in again.</li>
           <li>The new role column is required: deploy the migration atomically, and reset any local database that has members.</li>
-          <li>Stock is keyed by SKU text, not by catalog variant, and reservations are made with the user's own token.</li>
+          <li>Stock is keyed by SKU text, not by catalog variant, and reservations are made with the user's own token (changed in #22).</li>
           <li>The audit log is not limited by branch, so a branch-restricted manager with report access sees every branch's entries.</li>
         </ul>
       </div>
@@ -448,8 +451,8 @@
 
 <footer id="sources">
   <div class="wrap">
-    <p><b>Where the numbers come from.</b> Route counts: <code>krakend/krakend.json</code> and a controller scan on main (d437b69). Tests and checks: the CI run and local runs on 31 October 2026. Screen coverage: the contracts in <code>docs/specs/2026-10-28-api-contracts</code> against the first-wave and permissions reports. Web and mobile state: route files and commits in each repository. Open pull requests: GitHub on 31 October.</p>
-    <p><b>Not verified.</b> The M1 to M6 stack was read, not built or run, so its test counts and behaviour are static. Whether the Figma fixes were applied is unknown. Sizes are judgements.</p>
+    <p><b>Where the numbers come from.</b> Route counts: <code>krakend/krakend.json</code> and a controller scan on main (d437b69). Tests and checks: the CI runs on main and on #22 and local runs on 31 October 2026. Screen coverage: the contracts in <code>docs/specs/2026-10-28-api-contracts</code> against the first-wave and permissions reports. Web and mobile state: route files and commits in each repository. Open pull requests: GitHub on 31 October.</p>
+    <p><b>Not verified.</b> The screen table counts are from main; they were not recounted for #22. Live marketplace calls were not run. The rebased M7 and M7.5 branches were verified on a rebuilt stack but not in CI (they only run after #22 merges). Whether the Figma fixes were applied is unknown. Sizes are judgements.</p>
     <p><b>Keeping it current.</b> This page is <code>docs/status.html</code> in the pbl-infra repository. To update it, edit the file and merge to <code>main</code>; GitHub Pages republishes it within a minute. Last updated 31 October 2026.</p>
   </div>
 </footer>
