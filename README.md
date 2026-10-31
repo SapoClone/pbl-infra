@@ -61,7 +61,8 @@ GitHub Actions (OIDC) ──push──▶ ECR (pbl-api)         GitHub Actions (
 The API is not one service. pbl-api is a monorepo of eight services behind a
 KrakenD gateway ([ADR-0010](https://github.com/SapoClone/pbl-api/blob/main/docs/decisions/0010-eight-services.md)):
 open `docs/architecture.html` (published to GitHub Pages) for the diagram and
-`docs/erd_viewer.html` for the tables each service owns.
+`docs/erd_viewer.html` for the tables each service owns. `docs/status.html` shows what is built
+across the repositories and what is still missing; edit it and merge to `main` to refresh the published copy.
 
 | Service | Gateway path | Postgres schema | Provisioned by this Terraform |
 |---|---|---|---|

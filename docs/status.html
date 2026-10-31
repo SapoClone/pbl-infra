@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PBL6 Status Report</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: one reading column. Summary first, then a screen-by-screen matrix, then the gaps ranked by what blocks what. */
+  :root {
+    --bg: #f4f7f5;
+    --surface: #ffffff;
+    --ink: #11251f;
+    --muted: #4e615a;
+    --line: #d5e0db;
+    --brand: #0a7a62;
+    --brand-deep: #06382d;
+    --band: #0c2f27;
+    --band-ink: #e9f5f0;
+    --ready-bg: #dcf2e8; --ready-fg: #0a5a44;
+    --part-bg: #fbebc6;  --part-fg: #744a00;
+    --miss-bg: #f8dbd6;  --miss-fg: #86201a;
+    --info-bg: #e2ecf5;  --info-fg: #1d4a72;
+    --none-bg: #e8ece9;  --none-fg: #44554e;
+    --focus: #0a7a62;
+    --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c1815; --surface: #12231f; --ink: #e5eee9; --muted: #98aea5; --line: #25403a;
+      --brand: #37c6a2; --brand-deep: #9be4cf; --band: #0a2a23; --band-ink: #e5f3ed;
+      --ready-bg: #12392c; --ready-fg: #8fe0c3;
+      --part-bg: #3b2e0b;  --part-fg: #f0c96b;
+      --miss-bg: #421f1b;  --miss-fg: #f4a49b;
+      --info-bg: #1a2e41;  --info-fg: #9cc4e6;
+      --none-bg: #1d2d29;  --none-fg: #a9bdb5;
+      --focus: #37c6a2;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1815; --surface: #12231f; --ink: #e5eee9; --muted: #98aea5; --line: #25403a;
+    --brand: #37c6a2; --brand-deep: #9be4cf; --band: #0a2a23; --band-ink: #e5f3ed;
+    --ready-bg: #12392c; --ready-fg: #8fe0c3;
+    --part-bg: #3b2e0b;  --part-fg: #f0c96b;
+    --miss-bg: #421f1b;  --miss-fg: #f4a49b;
+    --info-bg: #1a2e41;  --info-fg: #9cc4e6;
+    --none-bg: #1d2d29;  --none-fg: #a9bdb5;
+    --focus: #37c6a2;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+  * { box-sizing: border-box; }
+  a { color: var(--brand); text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+  header.top { background: var(--band); color: var(--band-ink); padding-block: 36px 28px; }
+  header.top .eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+  header.top h1 { font: 700 clamp(30px, 6vw, 48px)/1.05 var(--font-display); margin: 12px 0 10px; text-wrap: balance; }
+  header.top p { margin: 0; max-width: 62ch; opacity: .9; font-size: 16px; }
+  a.back { display: inline-block; margin-bottom: 18px; font-size: 14px; color: var(--band-ink); opacity: .85; }
+  a.back:hover { opacity: 1; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 22px; font-size: 14px; }
+  nav.toc a { color: var(--band-ink); opacity: .85; }
+  nav.toc a:hover { opacity: 1; }
+
+  main { padding-block: 28px 56px; display: grid; gap: 44px; }
+  section { min-width: 0; }
+  h2 { font: 700 26px/1.15 var(--font-display); margin: 0 0 6px; text-wrap: balance; }
+  h3 { font: 600 17px/1.3 var(--font-display); margin: 22px 0 8px; }
+  .lede { color: var(--muted); max-width: 70ch; margin: 0 0 18px; }
+  .src { font: 400 12px/1.4 var(--font-mono); color: var(--muted); }
+
+  .verdict { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; font-size: 17px; line-height: 1.5; max-width: 78ch; }
+  .verdict b { font-weight: 600; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 14px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+  .tile .num { font: 700 38px/1 var(--font-display); color: var(--brand-deep); font-variant-numeric: tabular-nums; }
+  .tile .num small { font-size: 18px; font-weight: 600; color: var(--muted); }
+  .tile .what { margin: 8px 0 8px; font-weight: 500; }
+  .tile .src { margin: 0; }
+
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 500 12px/1.2 var(--font-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--bg); position: sticky; top: 0; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  .vi { display: block; color: var(--muted); font-size: 12.5px; }
+  .id { display: block; font: 400 12px/1.3 var(--font-mono); color: var(--muted); white-space: nowrap; }
+  .muted { color: var(--muted); }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px 2px 8px; border-radius: 999px; font: 500 12.5px/1.5 var(--font-body); white-space: nowrap; }
+  .badge .g { font-size: 11px; }
+  .ready, .real { background: var(--ready-bg); color: var(--ready-fg); }
+  .partial, .mock { background: var(--part-bg); color: var(--part-fg); }
+  .missing { background: var(--miss-bg); color: var(--miss-fg); }
+  .placeholder { background: var(--info-bg); color: var(--info-fg); }
+  .none { background: var(--none-bg); color: var(--none-fg); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); align-items: center; }
+
+  .group { display: grid; gap: 10px; margin-bottom: 26px; }
+  .group-head { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; }
+  .group-head h3 { margin: 0; }
+  .bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--none-bg); border: 1px solid var(--line); }
+  .bar span { display: block; height: 100%; }
+  .bar .s-ready { background: var(--brand); }
+  .bar .s-part { background: #d9a21b; }
+  .bar .s-miss { background: #c4473b; }
+  .bar .s-info { background: #5b8db8; }
+  .bar-key { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 400 12.5px/1.4 var(--font-mono); color: var(--muted); }
+  .bar-key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+  .chip { font: 500 13px/1 var(--font-body); padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--brand-deep); color: var(--bg); border-color: var(--brand-deep); }
+
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 16px; }
+  summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+  details[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+  .cols { columns: 2 260px; column-gap: 28px; margin: 0 0 14px; padding-left: 18px; font-size: 14px; }
+  .cols li { break-inside: avoid; margin-bottom: 3px; }
+
+  .size { font: 500 12px/1 var(--font-mono); padding: 3px 7px; border-radius: 5px; background: var(--none-bg); color: var(--none-fg); }
+  .tier { margin: 26px 0 8px; font: 500 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+  .box h3 { margin-top: 0; }
+  .box ul { margin: 0; padding-left: 18px; }
+  .box li { margin-bottom: 6px; }
+  ol.decide { margin: 0; padding-left: 22px; display: grid; gap: 10px; max-width: 76ch; }
+  ol.decide li::marker { font-family: var(--font-mono); color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding-block: 22px 40px; color: var(--muted); font-size: 13px; }
+  footer p { margin: 0 0 6px; max-width: 84ch; }
+
+  @media (prefers-reduced-motion: no-preference) { .chip { transition: background .12s, color .12s; } }
+</style>
+<style>:root{color-scheme:light dark}body{margin:0}</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="back" href="index.html">&larr; PBL6 docs</a>
+    <div class="eyebrow">OmniRetail · PBL6 · status on 31 October 2026</div>
+    <h1>What we have, and what is missing</h1>
+    <p>A multi-store retail and point-of-sale platform: eight backend services, a React web app, a Flutter mobile app, and a Figma design with 50 screens.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#at-a-glance">At a glance</a>
+      <a href="#repos">Repositories</a>
+      <a href="#screens">Screens</a>
+      <a href="#have">Backend</a>
+      <a href="#fe">API contract</a>
+      <a href="#missing">Missing</a>
+      <a href="#decide">Decisions</a>
+      <a href="#risks">Risks</a>
+      <a href="#sources">Sources</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="at-a-glance">
+    <h2>At a glance</h2>
+    <p class="verdict">The backend is far ahead of everything else. It can serve <b>most of the tenant web screens and all of the mobile screens</b> today. The web app shows made-up data on four screens, has placeholders on five and nothing on eight; the mobile app does not exist yet. Three feature areas have <b>no backend at all</b>: platform admin, marketplace channels and email flows.</p>
+    <div class="tiles">
+      <div class="tile">
+        <div class="num">165</div>
+        <p class="what">API routes live on <code>main</code>, in 6 services</p>
+        <p class="src">174 gateway entries with health checks · krakend.json @ d437b69</p>
+      </div>
+      <div class="tile">
+        <div class="num">8<small> of 18</small></div>
+        <p class="what">tenant web screens whose APIs are fully ready; 8 more are partly ready</p>
+        <p class="src">screen table below · contracts in docs/specs/2026-10-28</p>
+      </div>
+      <div class="tile">
+        <div class="num">1<small> of 18</small></div>
+        <p class="what">tenant web screens wired to a real API today (sign-in)</p>
+        <p class="src">pbl-web @ 06e9b70, route files read</p>
+      </div>
+      <div class="tile">
+        <div class="num">0<small> of 31</small></div>
+        <p class="what">admin and mobile screens built: 23 admin screens have no API, 8 mobile screens have APIs but no app</p>
+        <p class="src">pbl-mobile @ 6253bec · contract 04</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="repos">
+    <h2>Where each repository stands</h2>
+    <p class="lede">Five repositories. Only the API repository is close to the design.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Repository</th><th>State</th><th>What stands out</th></tr></thead>
+        <tbody>
+          <tr><td><b>pbl-api</b><span class="id">main d437b69 · 31 Oct</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>Six services have real logic (platform, catalog, customer, inventory, sales, insight); finance and integration answer only a health check. Roles, permissions and branch scope are built. CI is green. Six open pull requests from the M1 to M6 work (#12 to #17) <b>conflict with main</b>.</td></tr>
+          <tr><td><b>pbl-web</b><span class="id">main 06e9b70 · 27 Oct</span></td><td><span class="badge partial"><span class="g">◐</span>Shell only</span></td><td>Sign-in, register and forgot-password call the real API. Dashboard, products, inventory and orders show hard-coded data; customers, POS, channels, suppliers and staff are placeholders. No admin portal. The theme tokens are blue while the pages hard-code green, and the Vietnamese strings are not in a locale file.</td></tr>
+          <tr><td><b>pbl-mobile</b><span class="id">main 6253bec · 29 Aug</span></td><td><span class="badge missing"><span class="g">○</span>Template</span></td><td>An untouched Flutter template: one placeholder page, a sign-in path that does not exist on the gateway, the template app id, a purple palette and no Vietnamese locale.</td></tr>
+          <tr><td><b>pbl-infra</b><span class="id">main bc935d8 · 19 Oct</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Terraform deploys only the platform service, and the AWS resources were deleted to save credits. Two pull requests are open: #6 (ERD changes for the design) and #5 (ECS definitions and messaging for the microservices).</td></tr>
+          <tr><td><b>pbl-mail-service</b><span class="id">main 5295d00 · 11 Sep</span></td><td><span class="badge partial"><span class="g">◐</span>One template</span></td><td>Sends the email-verification message. Invitation, password-reset and renewal emails do not exist.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="screens">
+    <h2>The 50 Figma screens against the APIs</h2>
+    <p class="lede">Two separate questions per screen: can the backend serve it today, and does the web app already show it. Mobile and admin are summarised below the table.</p>
+
+    <div class="legend" aria-label="Legend">
+      <span class="badge ready"><span class="g">●</span>Ready</span> every endpoint the screen needs exists
+      <span class="badge partial"><span class="g">◐</span>Partial</span> works, with a named gap
+      <span class="badge missing"><span class="g">○</span>Missing</span> no backend for it
+    </div>
+
+    <div class="group">
+      <div class="group-head"><h3>Tenant web · 18 screens</h3><span class="src">API readiness</span></div>
+      <div class="bar" role="img" aria-label="Tenant web API readiness: 8 ready, 8 partial, 2 missing">
+        <span class="s-ready" style="width:44.4%"></span><span class="s-part" style="width:44.4%"></span><span class="s-miss" style="width:11.2%"></span>
+      </div>
+      <div class="bar-key"><span><i style="background:var(--brand)"></i>8 ready</span><span><i style="background:#d9a21b"></i>8 partial</span><span><i style="background:#c4473b"></i>2 missing</span></div>
+      <div class="bar" role="img" aria-label="Tenant web UI today: 1 real, 4 mock, 5 placeholder, 8 missing">
+        <span class="s-ready" style="width:5.6%"></span><span class="s-part" style="width:22.2%"></span><span class="s-info" style="width:27.8%"></span><span class="s-miss" style="width:44.4%"></span>
+      </div>
+      <div class="bar-key"><span><i style="background:var(--brand)"></i>1 real API</span><span><i style="background:#d9a21b"></i>4 mock data</span><span><i style="background:#5b8db8"></i>5 placeholder</span><span><i style="background:#c4473b"></i>8 not started</span><span class="src">Web UI today</span></div>
+
+      <div class="chips" role="group" aria-label="Filter by API readiness">
+        <button class="chip" type="button" data-filter="all" aria-pressed="true">All 18</button>
+        <button class="chip" type="button" data-filter="ready" aria-pressed="false">Ready 8</button>
+        <button class="chip" type="button" data-filter="partial" aria-pressed="false">Partial 8</button>
+        <button class="chip" type="button" data-filter="missing" aria-pressed="false">Missing 2</button>
+      </div>
+
+      <div class="tablewrap">
+        <table id="web-table">
+          <thead><tr><th>Screen</th><th>API today</th><th>What the API still lacks</th><th>Web UI today</th></tr></thead>
+          <tbody>
+            <tr data-s="partial"><td>Sign in<span class="vi">Đăng nhập · 13:3</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Forgot, reset and verify-email are placeholders (no email flow); no phone login</td><td><span class="badge real"><span class="g">●</span>Real API</span></td></tr>
+            <tr data-s="partial"><td>Business overview<span class="vi">Tổng quan kinh doanh · 13:69</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>"Needs attention" feed is empty (nothing produces its events yet); gross profit is null until costs are tracked</td><td><span class="badge mock"><span class="g">◐</span>Mock data</span></td></tr>
+            <tr data-s="ready"><td>Products<span class="vi">Sản phẩm · 13:325</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>Stock on hand is read from inventory by the client</td><td><span class="badge mock"><span class="g">◐</span>Mock data</span></td></tr>
+            <tr data-s="partial"><td>Create product<span class="vi">Thêm sản phẩm · 51:2</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Image upload; initial stock</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="ready"><td>Inventory<span class="vi">Tồn kho · 13:647</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>Stock value is null until average cost exists</td><td><span class="badge mock"><span class="g">◐</span>Mock data</span></td></tr>
+            <tr data-s="partial"><td>Stock receipt<span class="vi">Nhập kho · 51:139</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Receipts apply at once: no draft, approval, lot or expiry</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="ready"><td>Orders<span class="vi">Đơn hàng · 13:965</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>None</td><td><span class="badge mock"><span class="g">◐</span>Mock data</span></td></tr>
+            <tr data-s="partial"><td>Order detail<span class="vi">Chi tiết đơn hàng · 13:1281</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Returns and refunds</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="ready"><td>Manual order<span class="vi">Tạo đơn thủ công · 51:250</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>None</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="partial"><td>Point of sale<span class="vi">Bán hàng tại quầy · 13:1536</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Checkout, shifts and registers work; return by original invoice and price lookup do not</td><td><span class="badge placeholder"><span class="g">▫</span>Placeholder</span></td></tr>
+            <tr data-s="missing"><td>Sales channels<span class="vi">Kênh bán hàng · 13:1734</span></td><td><span class="badge missing"><span class="g">○</span>Missing</span></td><td>The integration service is a health-check stub</td><td><span class="badge placeholder"><span class="g">▫</span>Placeholder</span></td></tr>
+            <tr data-s="missing"><td>Add connection<span class="vi">Thêm kết nối · 51:368</span></td><td><span class="badge missing"><span class="g">○</span>Missing</span></td><td>Same: no marketplace authorisation, mapping or sync</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="ready"><td>Customers<span class="vi">Khách hàng · 13:2010</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>File import</td><td><span class="badge placeholder"><span class="g">▫</span>Placeholder</span></td></tr>
+            <tr data-s="ready"><td>Add customer<span class="vi">Thêm khách hàng · 51:473</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>None</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="partial"><td>Purchasing and suppliers<span class="vi">Nhập hàng &amp; NCC · 13:2351</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Receiving goods against a purchase order (the order status cannot reach "received")</td><td><span class="badge placeholder"><span class="g">▫</span>Placeholder</span></td></tr>
+            <tr data-s="ready"><td>Create purchase order<span class="vi">Tạo đơn mua · 51:596</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>None (VAT maths verified: 14,200,000 + 1,136,000 = 15,336,000)</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+            <tr data-s="ready"><td>Staff and permissions<span class="vi">Nhân viên &amp; Phân quyền · 13:2646</span></td><td><span class="badge ready"><span class="g">●</span>Ready</span></td><td>None</td><td><span class="badge placeholder"><span class="g">▫</span>Placeholder</span></td></tr>
+            <tr data-s="partial"><td>Invite staff<span class="vi">Mời nhân viên · 51:707</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Adds an existing account with role and branches; the email invitation does not exist</td><td><span class="badge missing"><span class="g">○</span>Not started</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="src">Frame 13:3042 (an older admin design on the tenant page) is excluded: the 23-screen admin set replaces it.</p>
+    </div>
+
+    <div class="two">
+      <div class="box">
+        <div class="group-head"><h3>Platform admin · 23 screens</h3><span class="badge missing"><span class="g">○</span>None</span></div>
+        <div class="bar" role="img" aria-label="Platform admin: all 23 screens missing"><span class="s-miss" style="width:100%"></span></div>
+        <p>No admin identity and no <code>/admin</code> routes exist. The 51 endpoints are designed in contract 04 and nothing is built, in either the API or the web app. Screens: overview, businesses (list, detail, create, edit, lock), users, plans, subscriptions, usage limits, system monitoring, integrations, failed jobs, activity log, notices, support, settings.</p>
+        <details>
+          <summary>All 23 screens</summary>
+          <ol class="cols">
+            <li>Overview</li><li>Businesses</li><li>Business detail</li><li>Create business</li><li>Edit business</li><li>Lock business</li>
+            <li>Users</li><li>User detail</li><li>Service plans</li><li>Plan settings</li><li>Subscriptions</li><li>Subscription detail</li>
+            <li>Assign or change plan</li><li>Usage limits</li><li>System monitoring</li><li>Integrations</li><li>Failed jobs</li><li>Job detail</li>
+            <li>Activity log</li><li>Notices</li><li>Compose notice</li><li>Technical support</li><li>System settings</li>
+          </ol>
+        </details>
+      </div>
+      <div class="box">
+        <div class="group-head"><h3>Mobile app · 8 screens</h3><span class="badge missing"><span class="g">○</span>App not built</span></div>
+        <div class="bar" role="img" aria-label="Mobile API readiness: 7 ready, 1 partial"><span class="s-ready" style="width:87.5%"></span><span class="s-part" style="width:12.5%"></span></div>
+        <div class="bar-key"><span><i style="background:var(--brand)"></i>7 ready</span><span><i style="background:#d9a21b"></i>1 partial</span><span class="src">API readiness</span></div>
+        <p>Home, orders, reports, management, products, inventory and customers can be served by the existing endpoints. Stock count works by SKU only, because there is no barcode lookup. The app itself is the untouched template.</p>
+      </div>
+    </div>
+
+    <h3>Screens the design does not have yet</h3>
+    <p class="lede">About 35 screens are needed to ship and are not in Figma. Thirteen of them block a designed flow:</p>
+    <div class="two">
+      <div class="box"><h3>Tenant web · 8</h3><ul><li>Register a store</li><li>Forgot, reset and verify password</li><li>Accept a staff invitation</li><li>Store picker after sign-in</li><li>Product detail and edit</li><li>Receipt list and detail with approve</li><li>POS: open and close a shift</li><li>Order cancel and return</li></ul></div>
+      <div class="box"><h3>Admin · 2 and mobile · 3</h3><ul><li>Admin sign-in</li><li>Read-only support view with an end-session banner</li><li>Mobile sign-in with store and branch picker</li><li>Mobile scan tab</li><li>Mobile stock-count flow (counting and reconcile)</li></ul></div>
+    </div>
+  </section>
+
+  <section id="have">
+    <h2>What the backend gives us today</h2>
+    <p class="lede">All of it is on <code>main</code>, behind the gateway, with permissions and branch scope on every route.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Service</th><th class="num">Routes</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><b>platform</b></td><td class="num">47</td><td>Sign-in, refresh, sessions, login lockout; stores and branches; members with lock, unlock and removal; <b>roles, a 38-permission catalog, branch assignment</b>; branch settings; staff schedules; the context call a frontend uses to build its menus</td></tr>
+          <tr><td><b>catalog</b></td><td class="num">22</td><td>Products with variants (SKU and barcode unique per store), variant lookup for the till, categories, brands, attributes, channel listing, summary, CSV export</td></tr>
+          <tr><td><b>customer</b></td><td class="num">19</td><td>Customers with readable codes, groups, tags, addresses, loyalty points and settings; spend and points update from completed orders; phone hidden without permission</td></tr>
+          <tr><td><b>inventory</b></td><td class="num">40</td><td>Stock per branch, thresholds, ledger, summary, lookup, export; suppliers; purchase orders with VAT, approval and payments; transfers, stock takes and issues that write the ledger</td></tr>
+          <tr><td><b>sales</b></td><td class="num">22</td><td>Orders from draft to complete or cancel with history, payments and print data; shifts with cash reconciliation; registers; channels; shipping providers; summary and export</td></tr>
+          <tr><td><b>insight</b></td><td class="num">15</td><td>Dashboard KPIs, hourly, by-channel, top-product and by-branch summaries, report export, store-wide notifications, device tokens, attention feed, audit log</td></tr>
+          <tr><td><b>finance</b>, <b>integration</b></td><td class="num">0</td><td class="muted">Health check only. Full implementations exist in the open pull requests #16 and #17, not on main.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>How it was checked</h3>
+    <div class="two">
+      <div class="box"><ul>
+        <li><b>CI:</b> 13 of 13 checks passed on the combined change (lint, libraries, every service's build and test, integration, docs).</li>
+        <li><b>Unit tests:</b> 1,410 pass. Two tests of an internal HTTP client fail on the local machine only; they pass in CI.</li>
+        <li><b>Integration tests</b> against real Postgres and the event queue: 210 pass.</li>
+      </ul></div>
+      <div class="box"><ul>
+        <li><b>End to end through the real gateway:</b> the first-wave script runs 248 checks and the permissions script 142; the event and stack scripts pass.</li>
+        <li><b>Gateway config:</b> KrakenD accepts all 174 entries, and every controller route is declared there.</li>
+        <li>These ran on the branch before the squash merge; <code>main</code> has the same content (0 files differ).</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section id="fe">
+    <h2>Where the API contract is</h2>
+    <p class="lede">For anyone building a client from <code>main</code>. All of these files are in the <a href="https://github.com/SapoClone/pbl-api">pbl-api</a> repository.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>You need</th><th>Read</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td><b>Every endpoint</b>: request and response examples, errors, the permission that guards it</td><td><a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-28-screen-api-contracts.md">Contract index</a> and the sections <a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-28-api-contracts/01-platform.md">01 platform</a>, <a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-28-api-contracts/02-catalog-inventory.md">02 catalog and inventory</a>, <a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-28-api-contracts/03-sales-channels-customers.md">03 sales, channels, customers</a>, <a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-28-api-contracts/05-mobile.md">05 mobile</a></td><td>The index also holds the status values (D5), readable codes and the build order. Section 04 (platform admin) is design only; none of it is built.</td></tr>
+          <tr><td><b>What was really built</b> and where it differs from the contract</td><td><a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-29-first-wave/README.md">First-wave guide</a> and <a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-31-rbac/README.md">RBAC guide</a>, each with one report per service</td><td>Each report has a Built table marked "as contract" or "changed". <b>Where a report says changed, follow the report.</b> The contract files were not revised after the code.</td></tr>
+          <tr><td><b>Menus and buttons by permission</b></td><td><a href="https://github.com/SapoClone/pbl-api/blob/main/docs/specs/2026-10-31-rbac/README.md">RBAC guide</a>, section "For frontend developers", and <a href="https://github.com/SapoClone/pbl-api/blob/main/docs/guides/permissions.md">the permissions guide</a></td><td>One call, <code>GET /tenants/current/context</code>, returns the member, branches and permission codes.</td></tr>
+          <tr><td><b>URLs, status codes, errors, pagination, headers</b></td><td><a href="https://github.com/SapoClone/pbl-api/blob/main/docs/conventions/api-conventions.md">API conventions</a></td><td>Money is integer VND, lists are <code>{ data, pagination }</code>, a foreign store or branch answers 404.</td></tr>
+          <tr><td><b>Real requests and responses</b></td><td><a href="https://github.com/SapoClone/pbl-api/blob/main/scripts/demo-first-wave.sh">demo-first-wave.sh</a>, <a href="https://github.com/SapoClone/pbl-api/blob/main/scripts/demo-rbac.sh">demo-rbac.sh</a>, <a href="https://github.com/SapoClone/pbl-api/blob/main/scripts/demo-events.sh">demo-events.sh</a></td><td>Runnable scripts that call the gateway; they show working calls in order.</td></tr>
+          <tr><td><b>Which routes the gateway exposes</b></td><td><a href="https://github.com/SapoClone/pbl-api/blob/main/krakend/krakend.json">krakend.json</a></td><td>Clients call only the gateway, as <code>/&lt;service&gt;/api/v1/…</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="src" style="margin-top:10px">There is no machine-readable spec yet: only the platform service serves OpenAPI (<code>/api-docs</code>). Catalog, customer, inventory, sales and insight have none, so a typed client has to be written from the documents above.</p>
+  </section>
+
+  <section id="missing">
+    <h2>What is missing, in the order it matters</h2>
+    <p class="lede">Sizes are rough judgements (S is days, M is a week or two, L is several weeks), not measurements.</p>
+
+    <p class="tier">Blocks everything else</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><b>Web and mobile clients</b></td><td>Nothing in the design is usable until a client shows it. The web app has one screen on a real API (sign-in); the mobile app is a template. Frontend work needs the API client, theme tokens, the Vietnamese locale and the top bar first.</td><td><span class="size">L</span></td></tr>
+        <tr><td><b>Direction on pull requests #12 to #17</b></td><td>Another contributor built catalog, inventory, sales, customer, finance and integration in parallel. Four of those overlap services now on main, and all six conflict with it. They need a decision on which API shape wins and who ports what.</td><td><span class="size">decision</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <p class="tier">Features with no backend</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><b>Platform admin</b></td><td>23 screens with no identity, routes or monitoring data; 51 endpoints are designed. Needs its own login, cross-store reads and support sessions.</td><td><span class="size">L</span></td></tr>
+        <tr><td><b>Marketplace channels</b></td><td>Two web screens and the admin integration views. The integration service is a stub; the version in #17 simulates the marketplaces and needs changes before it can land.</td><td><span class="size">L</span></td></tr>
+        <tr><td><b>Email flows</b></td><td>Staff invitations, forgot and reset password, email verification. The mail service has one template, so real users cannot be onboarded.</td><td><span class="size">M</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <p class="tier">Flows that stop halfway</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><b>Stock receipts and purchase-order receiving</b></td><td>Receipts apply at once; there is no draft, approval, lot or expiry, and goods cannot be received against an order. Average cost and stock value are also missing.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Returns and refunds</b></td><td>Orders can be cancelled before completion; completed orders cannot be returned.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Events for new transitions</b></td><td>Only branch, sign-in, membership and order-completed events exist. Order confirmation, stock below minimum and receipts emit nothing, so the attention feed stays empty and push notifications have no source.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Image upload and imports</b></td><td>Product images, product and customer file import, and push sending are all unbuilt.</td><td><span class="size">M</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <p class="tier">Platform and operations</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><b>Production deployment</b></td><td>Terraform deploys only the platform service and the AWS resources are deleted. No gateway, no other services, and the event transport was never run on AWS.</td><td><span class="size">L</span></td></tr>
+        <tr><td><b>Database isolation</b></td><td>Every service connects as the database superuser. Row-level security and per-service roles exist only in the open M1 to M6 work, and applying them needs an audit of raw SQL.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Token lifetime</b></td><td>Access tokens last a day, so a role or permission change reaches a member late. The web client has no refresh logic yet.</td><td><span class="size">S</span></td></tr>
+        <tr><td><b>Rate limiting</b></td><td>None, although the security notes describe it.</td><td><span class="size">S</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <p class="tier">Design</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><b>44 Figma fixes</b></td><td>Posted as comments on the file: wrong totals, branch counts that disagree, role lists that differ, English labels in the mobile app. Whether they were applied is not known.</td><td><span class="size">S</span></td></tr>
+        <tr><td><b>Empty, loading and error states</b></td><td>None of the screens draw them, and the admin sidebar needs grouping and distinct icons.</td><td><span class="size">M</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="decide">
+    <h2>Decisions that need people</h2>
+    <ol class="decide">
+      <li><b>Which API shape does the frontend build against?</b> The contracts written for the Figma screens (what main follows), or the shapes in the M1 to M6 documents. The comparison recommends the contracts: main matches most of each service's contract endpoints (20 of 21 for sales, 39 of 46 for inventory, 17 of 20 for catalog, 16 of 19 for customer), while the other work matches none of them exactly.</li>
+      <li><b>Who ports what, and in which order</b> from the M1 to M6 work into main: row-level security and events first, then inventory cost and receipts, then returns and price lists.</li>
+      <li><b>When to switch to row-level security</b> and per-service database roles. It needs an audit of the raw SQL first.</li>
+      <li><b>Money and quantity types:</b> integer VND as the repository rule says, or decimal strings as in the other work.</li>
+      <li><b>Scope:</b> are price lists, promotions, customer tiers, holds and the checkout saga needed now, or after the screens work?</li>
+      <li><b>Merge pbl-infra #6</b> (the ERD changes for the design), and decide what happens to #5.</li>
+    </ol>
+  </section>
+
+  <section id="risks">
+    <h2>Risks to know about</h2>
+    <div class="two">
+      <div class="box">
+        <h3>In the unmerged M1 to M6 work</h3>
+        <ul>
+          <li>Review findings on this work, security among them, go to its author directly and are not listed on this public page.</li>
+          <li>Only the pull-request title check ran on all six pull requests; their tests are unverified.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>On main</h3>
+        <ul>
+          <li>Tokens issued before the permissions change give non-owners a 403 until they sign in again.</li>
+          <li>The new role column is required: deploy the migration atomically, and reset any local database that has members.</li>
+          <li>Stock is keyed by SKU text, not by catalog variant, and reservations are made with the user's own token.</li>
+          <li>The audit log is not limited by branch, so a branch-restricted manager with report access sees every branch's entries.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="sources">
+  <div class="wrap">
+    <p><b>Where the numbers come from.</b> Route counts: <code>krakend/krakend.json</code> and a controller scan on main (d437b69). Tests and checks: the CI run and local runs on 31 October 2026. Screen coverage: the contracts in <code>docs/specs/2026-10-28-api-contracts</code> against the first-wave and permissions reports. Web and mobile state: route files and commits in each repository. Open pull requests: GitHub on 31 October.</p>
+    <p><b>Not verified.</b> The M1 to M6 stack was read, not built or run, so its test counts and behaviour are static. Whether the Figma fixes were applied is unknown. Sizes are judgements.</p>
+    <p><b>Keeping it current.</b> This page is <code>docs/status.html</code> in the pbl-infra repository. To update it, edit the file and merge to <code>main</code>; GitHub Pages republishes it within a minute. Last updated 31 October 2026.</p>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var rows = document.querySelectorAll('#web-table tbody tr');
+    var chips = document.querySelectorAll('.chip');
+    function apply(filter) {
+      rows.forEach(function (r) { r.hidden = filter !== 'all' && r.getAttribute('data-s') !== filter; });
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-filter') === filter)); });
+    }
+    chips.forEach(function (c) { c.addEventListener('click', function () { apply(c.getAttribute('data-filter')); }); });
+  })();
+</script>
+
+</body>
+</html>
