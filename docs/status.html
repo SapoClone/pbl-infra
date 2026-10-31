@@ -206,7 +206,7 @@
       <table>
         <thead><tr><th>Repository</th><th>State</th><th>What stands out</th></tr></thead>
         <tbody>
-          <tr><td><b>pbl-api</b><span class="id">main d437b69 · 31 Oct · #22 at 0af0275</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>On main, six services have real logic; finance and integration answer only a health check. Open <a href="https://github.com/SapoClone/pbl-api/pull/22">#22</a> (13 of 13 checks green) makes all eight real. The older M1 to M6 pull requests (#12 to #17) conflict with main and are superseded by #22. M7 (#20) and M7.5 (#21) are being rebased onto it.</td></tr>
+          <tr><td><b>pbl-api</b><span class="id">main d437b69 · 31 Oct · #22 at 0af0275</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>On main, six services have real logic; finance and integration answer only a health check. Open <a href="https://github.com/SapoClone/pbl-api/pull/22">#22</a> (13 of 13 checks green) makes all eight real. The older M1 to M6 pull requests (#12 to #17) conflict with main and are superseded by #22. M7 (#20) and M7.5 (#21) are rebased onto it and pass the same checks locally.</td></tr>
           <tr><td><b>pbl-web</b><span class="id">main 06e9b70 · 27 Oct</span></td><td><span class="badge partial"><span class="g">◐</span>Shell only</span></td><td>Sign-in, register and forgot-password call the real API. Dashboard, products, inventory and orders show hard-coded data; customers, POS, channels, suppliers and staff are placeholders. No admin portal. The theme tokens are blue while the pages hard-code green, and the Vietnamese strings are not in a locale file.</td></tr>
           <tr><td><b>pbl-mobile</b><span class="id">main 6253bec · 29 Aug</span></td><td><span class="badge missing"><span class="g">○</span>Template</span></td><td>An untouched Flutter template: one placeholder page, a sign-in path that does not exist on the gateway, the template app id, a purple palette and no Vietnamese locale.</td></tr>
           <tr><td><b>pbl-infra</b><span class="id">main bc935d8 · 19 Oct</span></td><td><span class="badge partial"><span class="g">◐</span>Partial</span></td><td>Terraform deploys only the platform service, and the AWS resources were deleted to save credits. Two pull requests are open: #6 (ERD changes for the design) and #5 (ECS definitions and messaging for the microservices).</td></tr>
@@ -315,7 +315,7 @@
           <tr><td><b>customer</b></td><td class="num">19</td><td class="num">45</td><td>Customers, groups, tags, addresses, loyalty points and settings, membership tiers, import and export; phone hidden without permission</td></tr>
           <tr><td><b>inventory</b></td><td class="num">40</td><td class="num">59</td><td>Warehouses and stock per branch, thresholds, ledger, suppliers, purchase orders, transfers, stock takes, issues. #22 adds the receipt approval flow, stock views and exports, and a below-minimum event</td></tr>
           <tr><td><b>sales</b></td><td class="num">22</td><td class="num">63</td><td>Orders with the pack, ship and complete steps, payments, returns, promotions, POS shifts and registers, channels, shipping providers, summary, export and print data; a checkout saga that holds stock first</td></tr>
-          <tr><td><b>insight</b></td><td class="num">15</td><td class="num">15</td><td>Dashboard KPIs, summaries, report export, notifications, attention feed, audit log. M7 (a second, larger insight service by the other contributor) is being rebased to replace it</td></tr>
+          <tr><td><b>insight</b></td><td class="num">15</td><td class="num">15</td><td>Dashboard KPIs, summaries, report export, notifications, attention feed, audit log. In the rebased M7 pull request (#20) the other contributor's larger insight service replaces it, with our notifications, audit log and dashboard routes ported in; it adds 24 routes</td></tr>
           <tr><td><b>finance</b></td><td class="num">0</td><td class="num">60</td><td>Cashbook, journals, receivables and payables, credit limits, refunds, COD and settlements, reconciliation</td></tr>
           <tr><td><b>integration</b></td><td class="num">0</td><td class="num">29</td><td>Marketplace connections, SKU mapping, sync jobs, conflicts, webhooks. Live marketplace calls are off by default and have not been run against a real marketplace</td></tr>
           </tbody>
@@ -365,7 +365,7 @@
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
         <tr><td><b>Web and mobile clients</b></td><td>Nothing in the design is usable until a client shows it. The web app has one screen on a real API (sign-in); the mobile app is a template. Frontend work needs the API client, theme tokens, the Vietnamese locale and the top bar first.</td><td><span class="size">L</span></td></tr>
-        <tr><td><b>Merge #22, then M7 and M7.5</b></td><td>#22 settles the overlap: the other contributor's six services are the base. Their M7 (insight) and M7.5 (architecture hardening) pull requests are being rebased onto it; they conflict with main until then. Merge #22 with a merge commit, not a squash, so #12 to #17 close as merged.</td><td><span class="size">decision</span></td></tr>
+        <tr><td><b>Merge #22, then M7 and M7.5</b></td><td>#22 settles the overlap: the other contributor's six services are the base. Their M7 (insight, #20) and M7.5 (architecture hardening, #21) are rebased onto it, one on top of the other, and will show as conflicting with main until #22 lands. Merge in this order, each with a merge commit rather than a squash: #22, then #20, then #21. #12 to #17 then close as merged.</td><td><span class="size">decision</span></td></tr>
       </tbody>
     </table></div>
 
@@ -416,7 +416,7 @@
     <ol class="decide">
       <li><b>Merge pbl-api #22</b> with a merge commit. It replaces the earlier decision on API shape: the other contributor's stack is the base, and our screen contracts are served additively on top. Clients of the old shapes break: money is a number, and access is by permission.</li>
       <li><b>Review the defaults in #22:</b> warehouse staff cannot post receipts (needs the approve permission); creating promotions and coupons needs the order approve permission; role changes reach a member at the next token refresh.</li>
-      <li><b>M7 insight replaces our insight</b> (decided); M7.5 follows. Review the port once the pull requests are updated.</li>
+      <li><b>M7 insight replaces our insight</b> (decided), and M7.5 follows it. Review the port in #20 and the platform, sales and inventory domain changes in #21: the platform role type became a free string, and impossible order, payment and fulfilment combinations now fail loudly.</li>
       <li><b>When to switch to per-service database roles</b>, which turns row-level security on. It needs an audit of the raw SQL first.</li>
       <li><b>Scope:</b> shipping address on orders, purchase-order editing and payments, and real object storage: now or after the screens work?</li>
       <li><b>Merge pbl-infra #6</b> (the ERD changes for the design), and decide what happens to #5.</li>
@@ -452,7 +452,7 @@
 <footer id="sources">
   <div class="wrap">
     <p><b>Where the numbers come from.</b> Route counts: <code>krakend/krakend.json</code> and a controller scan on main (d437b69). Tests and checks: the CI runs on main and on #22 and local runs on 31 October 2026. Screen coverage: the contracts in <code>docs/specs/2026-10-28-api-contracts</code> against the first-wave and permissions reports. Web and mobile state: route files and commits in each repository. Open pull requests: GitHub on 31 October.</p>
-    <p><b>Not verified.</b> The screen table counts are from main; they were not recounted for #22. Live marketplace calls were not run. M7 and M7.5 are not yet rebased. Whether the Figma fixes were applied is unknown. Sizes are judgements.</p>
+    <p><b>Not verified.</b> The screen table counts are from main; they were not recounted for #22. Live marketplace calls were not run. The rebased M7 and M7.5 branches were verified on a rebuilt stack but not in CI (they only run after #22 merges). Whether the Figma fixes were applied is unknown. Sizes are judgements.</p>
     <p><b>Keeping it current.</b> This page is <code>docs/status.html</code> in the pbl-infra repository. To update it, edit the file and merge to <code>main</code>; GitHub Pages republishes it within a minute. Last updated 31 October 2026.</p>
   </div>
 </footer>
