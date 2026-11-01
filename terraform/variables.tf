@@ -150,3 +150,26 @@ variable "root_domain" {
   type        = string
   default     = "makeasy.id.vn"
 }
+
+# --- SapoClone v2 Microservices & Event Bus Topology ---------------------
+# Gated by enable_microservices_topology (defaults to false so existing
+# single-service production state is unaffected until explicitly enabled).
+
+variable "enable_microservices_topology" {
+  description = "When true, provisions the 8 SapoClone v2 per-service ECR repositories, ECS Service Connect internal services, least-privilege IAM task roles, and SNS/SQS event bus + DLQ topology."
+  type        = bool
+  default     = false
+}
+
+variable "microservice_cpu" {
+  description = "Fargate CPU units per internal microservice task."
+  type        = number
+  default     = 256
+}
+
+variable "microservice_memory" {
+  description = "Fargate memory (MiB) per internal microservice task."
+  type        = number
+  default     = 512
+}
+
