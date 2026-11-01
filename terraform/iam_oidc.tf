@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "pbl_api_deployer" {
       "ecr:UploadLayerPart",
       "ecr:CompleteLayerUpload",
     ]
-    resources = [module.pbl_api_ecr.arn]
+    resources = [module.pbl_api_ecr.arn, module.gateway_ecr.arn]
   }
 
   statement {
@@ -44,24 +44,46 @@ data "aws_iam_policy_document" "pbl_api_deployer" {
   }
 
   statement {
-    sid       = "EcsUpdateService"
+    sid     = "EcsRollout"
+    effect  = "Allow"
+    actions = ["ecs:UpdateService", "ecs:DescribeServices"]
+    resources = concat(
+      [for m in module.service : m.service_arn],
+      [module.gateway.service_arn],
+    )
+  }
+
+  # The platform migration runs as a one-off task of the platform task definition (any revision).
+  statement {
+    sid       = "EcsRunMigration"
     effect    = "Allow"
-    actions   = ["ecs:UpdateService"]
-    resources = ["arn:aws:ecs:${var.aws_region}:*:service/${module.pbl_api.cluster_name}/${module.pbl_api.service_name}"]
+    actions   = ["ecs:RunTask"]
+    resources = ["arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/platform:*"]
+    condition {
+      test     = "ArnEquals"
+      variable = "ecs:cluster"
+      values   = [module.cluster.cluster_arn]
+    }
+  }
+
+  statement {
+    sid       = "EcsWatchTasks"
+    effect    = "Allow"
+    actions   = ["ecs:DescribeTasks"]
+    resources = ["arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task/${module.cluster.cluster_name}/*"]
   }
 
   statement {
     sid     = "PassTaskRoles"
     effect  = "Allow"
     actions = ["iam:PassRole"]
-    # RegisterTaskDefinition needs PassRole on BOTH roles the task
-    # definition references — the task role (app runtime permissions) and
-    # the execution role (ECS agent's own image-pull/log-push permissions)
-    # — not just the one the app code actually uses.
-    resources = [
-      module.pbl_api.task_role_arn,
-      module.pbl_api.execution_role_arn,
-    ]
+    # RegisterTaskDefinition and RunTask need PassRole on BOTH roles a task definition references (the task role
+    # and the execution role), for every service.
+    resources = concat(
+      [for m in module.service : m.task_role_arn],
+      [for m in module.service : m.execution_role_arn],
+      [module.gateway.task_role_arn, module.gateway.execution_role_arn],
+    )
   }
 }
 

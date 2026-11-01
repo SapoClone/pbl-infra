@@ -1,0 +1,254 @@
+# Rehearsal of the production deployment on one machine: the SAME production images CI builds (Dockerfile,
+# target production), the production gateway config rendered by scripts/render-krakend-prod.mjs, one Postgres role
+# per service (scripts/neon-bootstrap.sql), the SNS topics and SQS queues that terraform/modules/events creates
+# (applied to LocalStack by rehearse.sh), and the container settings of terraform/services.tf. What it cannot prove:
+# ECS, the ALB, IAM, Neon and Upstash themselves.
+#
+#   ./rehearse.sh up        build, provision, start
+#   ./rehearse.sh test      run the three demo scripts through the gateway
+#   ./rehearse.sh down      remove everything
+
+x-service: &service
+  restart: "no"
+  networks: [pbl]
+  healthcheck:
+    test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/health || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 40s
+
+x-env: &env
+  NODE_ENV: production
+  PORT: "3000"
+  AWS_REGION: ap-southeast-1
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_ENDPOINT_URL: http://localstack:4566
+  AWS_ENDPOINT_URL_SQS: http://localstack:4566
+  APP_SWAGGER_ENABLED: "false"
+  DATABASE_HOST: postgres
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: pbl
+  DATABASE_SSL_ENABLED: "false"
+  DATABASE_MAX_CONNECTIONS: "10"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: rehearsal-redis
+  REDIS_TLS_ENABLED: "false"
+  EVENTS_TRANSPORT: sns
+  INTERNAL_S2S_TOKEN: rehearsal-internal-token
+  AUTH_JWKS_URL: http://platform:3000/.well-known/jwks.json
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: pbl }
+    networks: [pbl]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pbl"]
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "rehearsal-redis"]
+    networks: [pbl]
+
+  localstack:
+    image: localstack/localstack:3.8
+    environment: { SERVICES: "sns,sqs,cloudwatch,sts" }
+    ports: ["14566:4566"]
+    networks: [pbl]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:4566/_localstack/health"]
+      interval: 3s
+      retries: 30
+
+  platform:
+    <<: *service
+    image: pbl-rehearsal/platform
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: platform }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_platform
+      DATABASE_PASSWORD: pw-platform
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-platform-events
+      APP_NAME: platform
+      APP_DEBUG: "false"
+      API_PREFIX: api
+      APP_FALLBACK_LANGUAGE: en
+      APP_LOG_LEVEL: warn
+      APP_LOG_SERVICE: console
+      APP_CORS_ORIGIN: "false"
+      APP_SWAGGER_ENABLED: "true"
+      APP_SWAGGER_USER: swagger
+      APP_SWAGGER_PASSWORD: swagger
+      APP_URL: http://localhost:18080/platform
+      DATABASE_TYPE: postgres
+      DATABASE_LOGGING: "false"
+      DATABASE_SYNCHRONIZE: "false"
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/email-verification
+      AWS_S3_BUCKET: rehearsal
+      AWS_S3_REGION: ap-southeast-1
+      CDN_URL: http://localhost/static
+      AUTH_JWT_TOKEN_EXPIRES_IN: 1d
+      AUTH_REFRESH_TOKEN_EXPIRES_IN: 30d
+      AUTH_FORGOT_TOKEN_EXPIRES_IN: 7d
+      AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN: 1d
+      AUTH_JWT_KEY_ID: prod-1
+      AUTH_JWT_ISSUER: platform
+      AUTH_JWT_AUDIENCE: pbl6
+      AUTH_JWT_PRIVATE_KEY: ${AUTH_JWT_PRIVATE_KEY:?run ./rehearse.sh up}
+      AUTH_FORGOT_SECRET: rehearsal-forgot
+      AUTH_CONFIRM_EMAIL_SECRET: rehearsal-confirm
+      OBSERVE_APP_KEY: x
+      OBSERVE_APP_SECRET: x
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  catalog:
+    <<: *service
+    image: pbl-rehearsal/catalog
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: catalog }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_catalog
+      DATABASE_PASSWORD: pw-catalog
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-catalog-events
+      DATABASE_SCHEMA: catalog
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  customer:
+    <<: *service
+    image: pbl-rehearsal/customer
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: customer }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_customer
+      DATABASE_PASSWORD: pw-customer
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-customer-events
+      DATABASE_SCHEMA: customer
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  inventory:
+    <<: *service
+    image: pbl-rehearsal/inventory
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: inventory }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_inventory
+      DATABASE_PASSWORD: pw-inventory
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-inventory-events
+      DATABASE_SCHEMA: inventory
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  sales:
+    <<: *service
+    image: pbl-rehearsal/sales
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: sales }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_sales
+      DATABASE_PASSWORD: pw-sales
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-sales-events
+      DATABASE_SCHEMA: sales
+      INVENTORY_URL: http://inventory:3000
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  finance:
+    <<: *service
+    image: pbl-rehearsal/finance
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: finance }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_finance
+      DATABASE_PASSWORD: pw-finance
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-finance-events
+      DATABASE_SCHEMA: finance
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  integration:
+    <<: *service
+    image: pbl-rehearsal/integration
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: integration }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_integration
+      DATABASE_PASSWORD: pw-integration
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-integration-events
+      DATABASE_SCHEMA: integration
+      SALES_SERVICE_URL: http://sales:3000
+      INTEGRATION_CREDENTIAL_MASTER_KEY: cmVoZWFyc2FsLW1hc3Rlci1rZXktMzItYnl0ZXMhISE=
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  insight:
+    <<: *service
+    image: pbl-rehearsal/insight
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}
+      target: production
+      args: { APP_NAME: insight }
+    environment:
+      <<: *env
+      DATABASE_USERNAME: pbl_insight
+      DATABASE_PASSWORD: pw-insight
+      EVENTS_TOPIC_ARN: arn:aws:sns:ap-southeast-1:000000000000:pbl-insight-events
+      DATABASE_SCHEMA: insight
+    depends_on:
+      postgres: { condition: service_healthy }
+      localstack: { condition: service_healthy }
+
+  gateway:
+    image: pbl-rehearsal/gateway
+    build:
+      context: ${PBL_API_DIR:-../../pbl-api}/krakend
+      args: { GATEWAY_CONFIG: krakend.prod.json }
+    ports: ["${GATEWAY_HOST_PORT:-18080}:8080"]
+    networks: [pbl]
+    depends_on:
+      platform: { condition: service_healthy }
+      catalog: { condition: service_healthy }
+      customer: { condition: service_healthy }
+      inventory: { condition: service_healthy }
+      sales: { condition: service_healthy }
+      finance: { condition: service_healthy }
+      integration: { condition: service_healthy }
+      insight: { condition: service_healthy }
+
+networks:
+  pbl: {}

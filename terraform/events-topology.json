@@ -1,0 +1,172 @@
+{
+  "topics": [
+    "catalog",
+    "customer",
+    "finance",
+    "insight",
+    "integration",
+    "inventory",
+    "platform",
+    "sales"
+  ],
+  "queues": {
+    "sales": {
+      "platform": [
+        "platform.branch.created",
+        "platform.branch.updated"
+      ],
+      "catalog": [
+        "catalog.product.created",
+        "catalog.product.updated",
+        "catalog.product.deactivated",
+        "catalog.variant.created",
+        "catalog.variant.updated",
+        "catalog.variant.deactivated",
+        "catalog.price.changed"
+      ],
+      "inventory": [
+        "inventory.reservation.confirmed",
+        "inventory.reservation.committed",
+        "inventory.reservation.released",
+        "inventory.reservation.expired"
+      ]
+    },
+    "inventory": {
+      "platform": [
+        "platform.branch.created",
+        "platform.branch.updated"
+      ],
+      "catalog": [
+        "catalog.product.created",
+        "catalog.product.updated",
+        "catalog.product.deactivated",
+        "catalog.variant.created",
+        "catalog.variant.updated",
+        "catalog.variant.deactivated"
+      ],
+      "sales": [
+        "sales.order.completed"
+      ]
+    },
+    "customer": {
+      "sales": [
+        "sales.order.completed",
+        "sales.checkout.completed",
+        "sales.order.cancelled",
+        "sales.return.completed"
+      ],
+      "finance": [
+        "finance.receivable.created",
+        "finance.receivable.payment_applied"
+      ]
+    },
+    "finance": {
+      "platform": [
+        "platform.branch.created",
+        "platform.branch.updated"
+      ],
+      "sales": [
+        "sales.order.completed",
+        "sales.checkout.completed",
+        "sales.tender.recorded",
+        "sales.payment.confirmed",
+        "sales.return.completed",
+        "sales.refund.requested",
+        "sales.shift.closed",
+        "sales.fulfillment.completed"
+      ],
+      "inventory": [
+        "inventory.purchase_order.approved",
+        "inventory.stock.received"
+      ],
+      "customer": [
+        "customer.created",
+        "customer.updated",
+        "customer.deactivated"
+      ]
+    },
+    "integration": {
+      "platform": [
+        "platform.branch.created",
+        "platform.branch.updated"
+      ],
+      "catalog": [
+        "catalog.product.created",
+        "catalog.product.updated",
+        "catalog.product.deactivated",
+        "catalog.variant.created",
+        "catalog.variant.updated",
+        "catalog.variant.deactivated",
+        "catalog.price.changed"
+      ],
+      "inventory": [
+        "inventory.stock.changed",
+        "inventory.reservation.confirmed",
+        "inventory.reservation.committed",
+        "inventory.reservation.released",
+        "inventory.reservation.expired",
+        "inventory.transfer.received",
+        "inventory.stocktake.adjusted"
+      ],
+      "sales": [
+        "sales.order.confirmed",
+        "sales.order.cancelled",
+        "sales.order.completed",
+        "sales.fulfillment.completed"
+      ]
+    },
+    "insight": {
+      "platform": [
+        "platform.branch.created",
+        "platform.branch.updated",
+        "platform.account.logged_in",
+        "platform.membership.granted",
+        "platform.membership.role_changed"
+      ],
+      "catalog": [
+        "catalog.product.created",
+        "catalog.product.updated",
+        "catalog.product.deactivated",
+        "catalog.variant.created",
+        "catalog.variant.updated",
+        "catalog.variant.deactivated"
+      ],
+      "inventory": [
+        "inventory.reservation.confirmed",
+        "inventory.reservation.committed",
+        "inventory.reservation.released",
+        "inventory.reservation.expired",
+        "inventory.stock.changed",
+        "inventory.stock.below_min",
+        "inventory.stock.received",
+        "inventory.stock.issued",
+        "inventory.transfer.dispatched",
+        "inventory.transfer.received",
+        "inventory.stocktake.adjusted",
+        "inventory.purchase_order.approved"
+      ],
+      "sales": [
+        "sales.order.created",
+        "sales.order.confirmed",
+        "sales.order.cancelled",
+        "sales.order.completed",
+        "sales.checkout.completed",
+        "sales.return.completed"
+      ],
+      "customer": [
+        "customer.created",
+        "customer.updated",
+        "customer.deactivated",
+        "customer.group.changed"
+      ],
+      "finance": [
+        "finance.cashbook.entry_posted",
+        "finance.receivable.payment_applied"
+      ],
+      "integration": [
+        "integration.external_order.mapping_required",
+        "integration.sync_job.failed"
+      ]
+    }
+  }
+}

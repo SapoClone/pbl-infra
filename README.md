@@ -9,7 +9,7 @@ Activate/education/promo credits.
 pbl-infra/
 ├── root.hcl                 # root: S3 backend (auto-bootstrapping) + provider, shared by every env
 ├── terraform/               # the actual Terraform module — never applied directly, only via Terragrunt
-│   ├── modules/              # ecr_repository, ecs_service, lambda_sqs_consumer, sqs_queue, github_oidc_deployer
+│   ├── modules/              # ecr_repository, ecs_cluster, ecs_app, events, lambda_sqs_consumer, sqs_queue, github_oidc_deployer
 │   └── *.tf
 └── live/
     └── prod/
@@ -64,34 +64,34 @@ open `docs/architecture.html` (published to GitHub Pages) for the diagram and
 `docs/erd_viewer.html` for the tables each service owns. `docs/status.html` shows what is built
 across the repositories and what is still missing; edit it and merge to `main` to refresh the published copy.
 
-| Service | Gateway path | Postgres schema | Provisioned by this Terraform |
-|---|---|---|---|
-| `platform` | `/platform/*` | `platform` | yes, as the service named `pbl-api` |
-| `catalog` | `/catalog/*` | `catalog` | no |
-| `inventory` | `/inventory/*` | `inventory` | no |
-| `sales` | `/sales/*` | `sales` | no |
-| `customer` | `/customer/*` | `customer` | no |
-| `finance` | `/finance/*` | `finance` | no |
-| `integration` | `/integration/*` | `integration` | no |
-| `insight` | `/insight/*` | `insight` | no |
+| Service | Gateway path | Postgres schema (role) |
+|---|---|---|
+| `platform` | `/platform/*` | `public` (`pbl_platform`): its hand-written migrations create tables in `public` |
+| `catalog` | `/catalog/*` | `catalog` (`pbl_catalog`) |
+| `inventory` | `/inventory/*` | `inventory` (`pbl_inventory`) |
+| `sales` | `/sales/*` | `sales` (`pbl_sales`) |
+| `customer` | `/customer/*` | `customer` (`pbl_customer`) |
+| `finance` | `/finance/*` | `finance` (`pbl_finance`) |
+| `integration` | `/integration/*` | `integration` (`pbl_integration`) |
+| `insight` | `/insight/*` | `insight` (`pbl_insight`) |
 
-What is in this repo today is the single-service deployment described above.
-Deploying the target topology needs the following, none of which exists yet:
+This Terraform provisions all of it ([deployment runbook](DEPLOY-BACKEND.md)):
 
-- one ECR repository and one ECS service per service (the `Dockerfile` of pbl-api
-  already builds any of them with `--build-arg APP_NAME=<service>`, but its
-  `deploy.yml` still pushes only `platform`);
-- the KrakenD gateway as the public entry point instead of the ALB pointing at
-  `pbl-api`, with an https JWKS URL;
-- one Neon project with the eight schemas (and, as a target, one database role
-  per service limited to its schema);
-- the SNS/SQS event bus (it runs locally on ElasticMQ and has never run on AWS): a topic per
-  producer, a queue and DLQ per consumer, with retry and redrive ([ADR-0007](https://github.com/SapoClone/pbl-api/blob/main/docs/decisions/0007-event-bus.md));
-- the `AUTH_JWT_PRIVATE_KEY` signing key for `platform` (see the open
-  `fix/p0-deploy-config` change) and `AUTH_JWKS_URL` for every other service.
+- one ECS cluster with one Fargate service per backend service plus the gateway, and one ALB that
+  forwards only to the gateway (KrakenD, built from `krakend/Dockerfile` with the production config
+  `scripts/render-krakend-prod.mjs` renders in pbl-api). Services reach each other by name through
+  ECS Service Connect (`http://sales:3000`), so the gateway keeps the hosts of its local config;
+- one ECR repository for every service (tags `<service>-<sha>`) and one for the gateway;
+- the event bus, generated from pbl-api's topology (`terraform/events-topology.json`): an SNS topic
+  per producer, a queue and DLQ per consumer, raw delivery, a filter on the event type, and an alarm
+  on every DLQ;
+- one Postgres role and schema per service (`scripts/neon-bootstrap.sql`, run once against Neon);
+- the secrets every service needs as SSM parameters (`/pbl/shared`, `/pbl/<service>`, `/pbl/platform`),
+  including `INTERNAL_S2S_TOKEN`, without which the services refuse service-to-service calls.
 
 The AWS resources are currently destroyed to save credits; the Terraform is kept
-and re-applied when a deployment is needed.
+and re-applied when a deployment is needed. `rehearsal/` runs the same images, roles and event bus
+on one machine, which is how a change here is checked without AWS.
 
 ## Domain & HTTPS
 
@@ -284,14 +284,18 @@ a shared secret) and add:
 
 ### pbl-api repo variables
 
+Print them all with `terragrunt output -raw github_actions_variables`. Setting `AWS_DEPLOYER_ROLE_ARN`
+switches the deploy jobs on (they are skipped while it is unset).
+
 | Variable | Value |
 |---|---|
 | `AWS_DEPLOYER_ROLE_ARN` | `pbl_api_deployer_role_arn` output |
 | `AWS_REGION` | your region, e.g. `ap-southeast-1` |
-| `AWS_ECR_REPOSITORY` | `pbl_api_ecr_name` output |
-| `AWS_ECS_CLUSTER` | `pbl_api_ecs_cluster` output |
-| `AWS_ECS_SERVICE` | `pbl_api_ecs_service` output |
-| `AWS_ECS_TASK_FAMILY` | `pbl_api_ecs_task_family` output |
+| `AWS_ECR_REPOSITORY` | `pbl-api` (the shared service repository) |
+| `AWS_GATEWAY_ECR_REPOSITORY` | `pbl-gateway` |
+| `AWS_ECS_CLUSTER` | `ecs_cluster` output |
+| `GATEWAY_JWKS_URL` | `http://platform:3000/.well-known/jwks.json` |
+| `GATEWAY_CORS_ORIGINS` | comma-separated exact web origins |
 
 ### pbl-mail-service repo variables
 
@@ -311,22 +315,23 @@ Push to `main` (or run the workflow manually) — each repo's
 register a new task definition revision + force a new deployment; Lambda:
 `update-function-code`).
 
-## 7. Run the initial migration against Neon
+## 7. Provision Neon, then migrate
 
-```bash
-pnpm migration:up
-```
-
-(from the pbl-api repo, with Neon credentials in a local `.env`.)
+Run `scripts/neon-bootstrap.sql` once as the database owner (it creates the eight roles and schemas; the
+command is in its header), before the first deploy. After that nothing is run by hand: every service
+except platform migrates itself at start, and `deploy.yml` runs platform's migrations as a one-off ECS
+task of the new image before it rolls any service out.
 
 ## Secrets reference (single source of truth)
 
 | Secret | Consumed by | Where the value comes from | Delivery mechanism |
 |---|---|---|---|
-| `DATABASE_PASSWORD` | pbl-api | Neon dashboard | SSM `SecureString` → ECS task `secrets` |
-| `REDIS_PASSWORD` | pbl-api | Upstash Redis dashboard | SSM `SecureString` → ECS task `secrets` |
-| `AUTH_JWT_PRIVATE_KEY` | pbl-api | Generated: `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \| base64 -w0` (base64 PEM RSA key; the key id `AUTH_JWT_KEY_ID` is a plain ECS env var, not a secret) | SSM `SecureString` → ECS task `secrets` |
-| `AUTH_FORGOT_SECRET` / `AUTH_CONFIRM_EMAIL_SECRET` | pbl-api | Generated (`openssl rand -base64 32`) | SSM `SecureString` → ECS task `secrets` |
+| `database_passwords` (× 8) | each service, its own `pbl_<service>` role | Generated; the same values go to `scripts/neon-bootstrap.sql` | SSM `/pbl/<service>/DATABASE_PASSWORD` → ECS task `secrets` |
+| `REDIS_PASSWORD` | every service | Upstash Redis dashboard | SSM `/pbl/shared/REDIS_PASSWORD` → ECS task `secrets` |
+| `INTERNAL_S2S_TOKEN` | every service (header `x-internal-token`) | Generated: `openssl rand -hex 32` | SSM `/pbl/shared/INTERNAL_S2S_TOKEN` → ECS task `secrets` |
+| `INTEGRATION_CREDENTIAL_MASTER_KEY` | integration | Generated: `openssl rand -base64 32` | SSM `/pbl/integration/...` → ECS task `secrets` |
+| `AUTH_JWT_PRIVATE_KEY` | platform | Generated: `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \| base64 -w0` (base64 PEM RSA key; the key id `AUTH_JWT_KEY_ID` is a plain ECS env var, not a secret) | SSM `SecureString` → ECS task `secrets` |
+| `AUTH_FORGOT_SECRET` / `AUTH_CONFIRM_EMAIL_SECRET` | platform | Generated (`openssl rand -base64 32`) | SSM `SecureString` → ECS task `secrets` |
 | `OBSERVE_APP_KEY` / `OBSERVE_APP_SECRET` | pbl-api (SSM), pbl-mail-service (plain Lambda env — no SSM-backed `secrets` block exists for Lambda) | observe.nestjs.com project | pbl-api: SSM; pbl-mail-service: Lambda environment variable |
 | `RESEND_API_KEY` | pbl-mail-service | Resend dashboard | Lambda environment variable |
 | `AWS_DEPLOYER_ROLE_ARN` (× 2) | GitHub Actions (per repo) | Terraform output, no secret value — a role ARN, not a credential | Repo *variable*, not secret |
