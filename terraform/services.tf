@@ -61,8 +61,8 @@ locals {
     AWS_S3_BUCKET                       = aws_s3_bucket.images.id
     AWS_S3_REGION                       = var.aws_region
     CDN_URL                             = "https://static.${var.domain_name}"
-    AUTH_JWT_TOKEN_EXPIRES_IN           = "1d"
-    AUTH_REFRESH_TOKEN_EXPIRES_IN       = "30d"
+    AUTH_JWT_TOKEN_EXPIRES_IN           = "15m" # SRS FR-M02-03; pbl-web refreshes on 401
+    AUTH_REFRESH_TOKEN_EXPIRES_IN       = "7d"
     AUTH_FORGOT_TOKEN_EXPIRES_IN        = "7d"
     AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN = "1d"
     AUTH_JWT_KEY_ID                     = "prod-1"

@@ -95,8 +95,8 @@ services:
       AWS_S3_BUCKET: rehearsal
       AWS_S3_REGION: ap-southeast-1
       CDN_URL: http://localhost/static
-      AUTH_JWT_TOKEN_EXPIRES_IN: 1d
-      AUTH_REFRESH_TOKEN_EXPIRES_IN: 30d
+      AUTH_JWT_TOKEN_EXPIRES_IN: 15m
+      AUTH_REFRESH_TOKEN_EXPIRES_IN: 7d
       AUTH_FORGOT_TOKEN_EXPIRES_IN: 7d
       AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN: 1d
       AUTH_JWT_KEY_ID: prod-1
