@@ -5,11 +5,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 export PBL_API_DIR="${PBL_API_DIR:-$(cd ../../pbl-api && pwd)}"
 export GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-18080}"
-export SQS_URL="http://sqs.ap-southeast-1.localhost.localstack.cloud:14566/000000000000" # LocalStack, for the demo scripts that read queue depths
+export SQS_URL="http://localhost:14566/000000000000" # Floci, for the demo scripts that read queue depths
 SERVICES=(platform catalog customer inventory sales finance integration insight)
 dc() { docker compose "$@"; }
 
-terraform_events() { # apply the real events module (and the email queue) to LocalStack
+terraform_events() { # apply the real events module (and the email queue) to Floci
   rm -rf .tf && mkdir -p .tf && cp -r ../terraform/modules .tf/ && cp ../terraform/events-topology.json .tf/
   cat > .tf/main.tf <<'TF'
 terraform {
@@ -25,9 +25,9 @@ provider "aws" {
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
   endpoints {
-    sns        = "http://localstack:4566"
-    sqs        = "http://localstack:4566"
-    cloudwatch = "http://localstack:4566"
+    sns        = "http://floci:4566"
+    sqs        = "http://floci:4566"
+    cloudwatch = "http://floci:4566"
   }
 }
 module "events" {
@@ -55,7 +55,7 @@ case "${1:-}" in
     [ -f .env ] || echo "AUTH_JWT_PRIVATE_KEY=$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null | base64 -w0)" > .env
     (cd "$PBL_API_DIR" && JWKS_URL=http://platform:3000/.well-known/jwks.json CORS_ORIGINS=https://app.example.com \
       node scripts/render-krakend-prod.mjs > krakend/krakend.prod.json)
-    dc up -d --wait postgres redis localstack
+    dc up -d --wait postgres redis floci
     terraform_events
     bootstrap_database
     dc build
@@ -71,8 +71,8 @@ case "${1:-}" in
     for demo in demo-first-wave demo-rbac demo-events; do
       if bash "$PBL_API_DIR/scripts/$demo.sh" > "logs/$demo.log" 2>&1; then status=PASS; else status=FAIL; failed=1; fi
       printf '%-18s %s  (%s ok, %s FAIL lines)  logs/%s.log\n' "$demo" "$status" \
-        "$(grep -c '^ok:' "logs/$demo.log" || true)" "$(grep -c '^FAIL:' "logs/$demo.log" || true)" "$demo"
-      grep '^FAIL:' "logs/$demo.log" | head -3 || true
+        "$(grep -c '^ *ok:' "logs/$demo.log" || true)" "$(grep -c '^ *FAIL:' "logs/$demo.log" || true)" "$demo"
+      grep '^ *FAIL:' "logs/$demo.log" | head -3 || true
     done
     exit $failed
     ;;

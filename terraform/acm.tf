@@ -40,3 +40,21 @@ resource "aws_acm_certificate_validation" "us_east_1" {
   certificate_arn         = aws_acm_certificate.us_east_1.arn
   validation_record_fqdns = [tolist(aws_acm_certificate.us_east_1.domain_validation_options)[0].resource_record_name]
 }
+
+# app.* for pbl-web's CloudFront distribution (web.tf); its own certificate so adding it never re-issues static.*.
+resource "aws_acm_certificate" "web" {
+  provider          = aws.us_east_1
+  domain_name       = "app.${var.domain_name}"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Validated like the two above: the acm_web_validation_cname output, added by hand at iNet.
+resource "aws_acm_certificate_validation" "web" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.web.arn
+  validation_record_fqdns = [tolist(aws_acm_certificate.web.domain_validation_options)[0].resource_record_name]
+}

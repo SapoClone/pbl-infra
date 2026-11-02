@@ -16,6 +16,8 @@ output "tasks_security_group_id" {
 
 output "gateway_target_group_arn" {
   value = aws_lb_target_group.gateway.arn
+  # ECS rejects a service whose target group has no listener yet, and the ALB takes minutes to create
+  depends_on = [aws_lb_listener.https]
 }
 
 output "alb_dns_name" {

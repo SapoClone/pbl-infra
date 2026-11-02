@@ -1,4 +1,4 @@
--- Provisions the Postgres side of the backend on Neon (or any Postgres 15+): one role and one schema per service.
+-- Provisions the Postgres side of the backend on Neon (or any Postgres 16+): one role and one schema per service.
 -- Run once as the database owner, before the first deploy; it is idempotent, so re-running rotates the passwords.
 --
 --   psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 \
@@ -21,6 +21,9 @@
 -- between services, not between tenants.
 -- Platform's hand-written migrations create their tables in `public` whatever DATABASE_SCHEMA says, so pbl_platform
 -- owns `public` and the other services get no access to it.
+-- The roles get CREATE ROLE's defaults (no superuser, CREATEDB, CREATEROLE or BYPASSRLS). The ALTER ROLEs below do
+-- not restate them: on Neon the owner is not a superuser, and Postgres 16+ refuses NOSUPERUSER from a non-superuser.
+-- For the same reason the owner is granted SET (not INHERIT) on each role: CREATE SCHEMA ... AUTHORIZATION needs it.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- platform's migrations default ids with uuid_generate_v4(); a role that is not a superuser cannot create the extension itself
@@ -31,54 +34,61 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 -- platform
 SELECT 'CREATE ROLE pbl_platform LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_platform') \gexec
-ALTER ROLE pbl_platform LOGIN PASSWORD :'platform_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_platform LOGIN PASSWORD :'platform_pw';
 GRANT USAGE, CREATE ON SCHEMA public TO pbl_platform;
 
 -- catalog
 SELECT 'CREATE ROLE pbl_catalog LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_catalog') \gexec
-ALTER ROLE pbl_catalog LOGIN PASSWORD :'catalog_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_catalog LOGIN PASSWORD :'catalog_pw';
+GRANT pbl_catalog TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS catalog AUTHORIZATION pbl_catalog;
 REVOKE ALL ON SCHEMA catalog FROM PUBLIC;
 ALTER ROLE pbl_catalog SET search_path = catalog, public;
 
 -- customer
 SELECT 'CREATE ROLE pbl_customer LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_customer') \gexec
-ALTER ROLE pbl_customer LOGIN PASSWORD :'customer_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_customer LOGIN PASSWORD :'customer_pw';
+GRANT pbl_customer TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS customer AUTHORIZATION pbl_customer;
 REVOKE ALL ON SCHEMA customer FROM PUBLIC;
 ALTER ROLE pbl_customer SET search_path = customer, public;
 
 -- inventory
 SELECT 'CREATE ROLE pbl_inventory LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_inventory') \gexec
-ALTER ROLE pbl_inventory LOGIN PASSWORD :'inventory_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_inventory LOGIN PASSWORD :'inventory_pw';
+GRANT pbl_inventory TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS inventory AUTHORIZATION pbl_inventory;
 REVOKE ALL ON SCHEMA inventory FROM PUBLIC;
 ALTER ROLE pbl_inventory SET search_path = inventory, public;
 
 -- sales
 SELECT 'CREATE ROLE pbl_sales LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_sales') \gexec
-ALTER ROLE pbl_sales LOGIN PASSWORD :'sales_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_sales LOGIN PASSWORD :'sales_pw';
+GRANT pbl_sales TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS sales AUTHORIZATION pbl_sales;
 REVOKE ALL ON SCHEMA sales FROM PUBLIC;
 ALTER ROLE pbl_sales SET search_path = sales, public;
 
 -- finance
 SELECT 'CREATE ROLE pbl_finance LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_finance') \gexec
-ALTER ROLE pbl_finance LOGIN PASSWORD :'finance_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_finance LOGIN PASSWORD :'finance_pw';
+GRANT pbl_finance TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS finance AUTHORIZATION pbl_finance;
 REVOKE ALL ON SCHEMA finance FROM PUBLIC;
 ALTER ROLE pbl_finance SET search_path = finance, public;
 
 -- integration
 SELECT 'CREATE ROLE pbl_integration LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_integration') \gexec
-ALTER ROLE pbl_integration LOGIN PASSWORD :'integration_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_integration LOGIN PASSWORD :'integration_pw';
+GRANT pbl_integration TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS integration AUTHORIZATION pbl_integration;
 REVOKE ALL ON SCHEMA integration FROM PUBLIC;
 ALTER ROLE pbl_integration SET search_path = integration, public;
 
 -- insight
 SELECT 'CREATE ROLE pbl_insight LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pbl_insight') \gexec
-ALTER ROLE pbl_insight LOGIN PASSWORD :'insight_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+ALTER ROLE pbl_insight LOGIN PASSWORD :'insight_pw';
+GRANT pbl_insight TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
 CREATE SCHEMA IF NOT EXISTS insight AUTHORIZATION pbl_insight;
 REVOKE ALL ON SCHEMA insight FROM PUBLIC;
 ALTER ROLE pbl_insight SET search_path = insight, public;

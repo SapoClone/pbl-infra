@@ -17,7 +17,7 @@ output "github_actions_variables" {
     AWS_GATEWAY_ECR_REPOSITORY    = ${module.gateway_ecr.name}
     AWS_ECS_CLUSTER               = ${module.cluster.cluster_name}
     GATEWAY_JWKS_URL              = ${local.jwks_url}
-    GATEWAY_CORS_ORIGINS          = <comma-separated web origins, e.g. https://app.example.com>
+    GATEWAY_CORS_ORIGINS          = https://app.${var.domain_name}
   EOT
 }
 
@@ -106,5 +106,38 @@ output "image_cdn_cname" {
     Type:  CNAME
     Host:  ${trimsuffix("static.${var.domain_name}", ".${var.root_domain}")}
     Value: ${aws_cloudfront_distribution.images.domain_name}
+  EOT
+}
+
+output "web_url" {
+  value = "https://app.${var.domain_name}"
+}
+
+output "pbl_web_github_actions_variables" {
+  description = "Repository variables for pbl-web (Settings > Secrets and variables > Actions > Variables). Print with: terragrunt output -raw pbl_web_github_actions_variables"
+  value       = <<-EOT
+    AWS_DEPLOYER_ROLE_ARN = ${module.pbl_web_deployer.role_arn}
+    AWS_REGION            = ${var.aws_region}
+    WEB_BUCKET            = ${module.web.bucket_name}
+    WEB_DISTRIBUTION_ID   = ${module.web.distribution_id}
+    VITE_API_URL          = https://api.${var.domain_name}/platform/api/v1
+  EOT
+}
+
+output "acm_web_validation_cname" {
+  description = "Add this as a CNAME record at iNet before the us-east-1 ACM cert for app.* (pbl-web) can validate. Print with: terragrunt output -raw acm_web_validation_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix(tolist(aws_acm_certificate.web.domain_validation_options)[0].resource_record_name, ".${var.root_domain}.")}
+    Value: ${tolist(aws_acm_certificate.web.domain_validation_options)[0].resource_record_value}
+  EOT
+}
+
+output "web_cname" {
+  description = "Add this as a CNAME record at iNet to make app.sapo.makeasy.id.vn reach pbl-web. Print with: terragrunt output -raw web_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix("app.${var.domain_name}", ".${var.root_domain}")}
+    Value: ${module.web.distribution_domain_name}
   EOT
 }

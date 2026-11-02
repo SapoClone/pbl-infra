@@ -73,6 +73,19 @@ against AWS use the HTTP assertions only or the rehearsal copy).
 Event bus smoke test, once: sign in, create a branch, and check `sales.branch_projection` has it within seconds and
 that no dead-letter alarm fired. Then `node scripts/redrive-dlq.js sales` against SQS, to prove the redrive works.
 
+## 6. pbl-web (app.sapo)
+
+The admin app is a static build on S3 behind CloudFront (`terraform/web.tf`, `modules/static_site`), deployed by
+pbl-web's `Deploy to S3` workflow. The apply in step 3 creates it; then:
+
+1. Add the CNAME that `terragrunt output -raw acm_web_validation_cname` prints at iNet (the apply waits for it).
+2. In pbl-web, add the repository variables that `terragrunt output -raw pbl_web_github_actions_variables` prints.
+3. Run `Deploy to S3` (Actions tab, Run workflow). It tests, builds with `VITE_API_URL`, uploads `dist/` and
+   invalidates the distribution.
+4. Add the `web_cname` record at iNet, then open `https://app.sapo.makeasy.id.vn`.
+
+pbl-api's `GATEWAY_CORS_ORIGINS` (step 4 above) is `https://app.sapo.makeasy.id.vn`, so the browser may call the API.
+
 ## Changing the event topology
 
 `terraform/events-topology.json` is generated from pbl-api's `libs/contracts/src/topology.ts`. After a change there:
@@ -95,14 +108,25 @@ rolled back by this: they are additive baselines, so an older image keeps workin
 
 `rehearsal/` runs the production images built by the same Dockerfile, the production gateway config, one Postgres
 role per service from `scripts/neon-bootstrap.sql`, the SNS topics and SQS queues that `terraform/modules/events`
-creates (a real `terraform apply` against LocalStack), and the container settings of `services.tf`. Then it runs
-pbl-api's three demo scripts through the gateway.
+creates (a real `terraform apply` against [Floci](https://github.com/floci-io/floci)), and the container settings of
+`services.tf`. Then it runs pbl-api's three demo scripts through the gateway.
+
+`rehearsal/ecs-spike/` applies the real `ecs_cluster`, `ecs_app` and `ecr_repository` modules to Floci, with an echo
+image as inventory, sales and the gateway. Verified there: the default VPC lookups, ACM DNS validation, images pushed
+to and pulled from ECR, the ALB's HTTP-to-HTTPS redirect and HTTPS forwarding to the gateway, SSM secrets in the task
+definition, awslogs. Floci does not provide Service Connect names (`http://inventory:3000` does not resolve) and does
+not run the task definition's container health check (tasks stay `UNKNOWN`).
+
+`rehearsal/web/` applies `modules/static_site` to Floci, builds pbl-web, runs the upload and invalidation steps of
+pbl-web's `deploy.yml` as written, and checks the result through CloudFront: client-side routes such as `/orders`
+answer 200 with the app, hashed assets are cached for a year and `index.html` is revalidated, the bundle calls
+`VITE_API_URL`, and the bucket refuses anonymous reads.
 
 `terraform test` plans the whole stack offline against a mocked provider.
 
-Not verifiable without AWS: ECS Service Connect name resolution, the ALB and its health checks, IAM policies,
-the `wget` container health checks under Fargate, Neon and Upstash themselves (TLS, pooling), CloudWatch alarms
-delivering email. Expect to fix something there on the first apply; the order above keeps the blast radius small.
+Not verifiable without AWS: ECS Service Connect name resolution, the ALB's health checks against real tasks, IAM
+policies, the `wget` container health checks under Fargate, Neon and Upstash themselves (TLS, pooling), CloudWatch
+alarms delivering email. Expect to fix something there on the first apply; the order above keeps the blast radius small.
 
 ## Known gaps
 

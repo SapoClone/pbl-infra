@@ -1,7 +1,7 @@
 # Rehearsal of the production deployment on one machine: the SAME production images CI builds (Dockerfile,
 # target production), the production gateway config rendered by scripts/render-krakend-prod.mjs, one Postgres role
 # per service (scripts/neon-bootstrap.sql), the SNS topics and SQS queues that terraform/modules/events creates
-# (applied to LocalStack by rehearse.sh), and the container settings of terraform/services.tf. What it cannot prove:
+# (applied to Floci by rehearse.sh), and the container settings of terraform/services.tf. What it cannot prove:
 # ECS, the ALB, IAM, Neon and Upstash themselves.
 #
 #   ./rehearse.sh up        build, provision, start
@@ -24,8 +24,8 @@ x-env: &env
   AWS_REGION: ap-southeast-1
   AWS_ACCESS_KEY_ID: test
   AWS_SECRET_ACCESS_KEY: test
-  AWS_ENDPOINT_URL: http://localstack:4566
-  AWS_ENDPOINT_URL_SQS: http://localstack:4566
+  AWS_ENDPOINT_URL: http://floci:4566
+  AWS_ENDPOINT_URL_SQS: http://floci:4566
   APP_SWAGGER_ENABLED: "false"
   DATABASE_HOST: postgres
   DATABASE_PORT: "5432"
@@ -55,13 +55,13 @@ services:
     command: ["redis-server", "--requirepass", "rehearsal-redis"]
     networks: [pbl]
 
-  localstack:
-    image: localstack/localstack:3.8
-    environment: { SERVICES: "sns,sqs,cloudwatch,sts" }
+  floci: # the image has no curl, wget or grep, hence bash alone
+    image: floci/floci:2.4.0
+    environment: { FLOCI_HOSTNAME: floci, FLOCI_DEFAULT_REGION: ap-southeast-1 }
     ports: ["14566:4566"]
     networks: [pbl]
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf localhost:4566/_localstack/health"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4566 && printf 'GET /_localstack/health HTTP/1.0\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]"]
       interval: 3s
       retries: 30
 
@@ -91,7 +91,7 @@ services:
       DATABASE_TYPE: postgres
       DATABASE_LOGGING: "false"
       DATABASE_SYNCHRONIZE: "false"
-      SQS_QUEUE_URL: http://localstack:4566/000000000000/email-verification
+      SQS_QUEUE_URL: http://floci:4566/000000000000/email-verification
       AWS_S3_BUCKET: rehearsal
       AWS_S3_REGION: ap-southeast-1
       CDN_URL: http://localhost/static
@@ -109,7 +109,7 @@ services:
       OBSERVE_APP_SECRET: x
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   catalog:
     <<: *service
@@ -126,7 +126,7 @@ services:
       DATABASE_SCHEMA: catalog
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   customer:
     <<: *service
@@ -143,7 +143,7 @@ services:
       DATABASE_SCHEMA: customer
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   inventory:
     <<: *service
@@ -160,7 +160,7 @@ services:
       DATABASE_SCHEMA: inventory
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   sales:
     <<: *service
@@ -178,7 +178,7 @@ services:
       INVENTORY_URL: http://inventory:3000
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   finance:
     <<: *service
@@ -195,7 +195,7 @@ services:
       DATABASE_SCHEMA: finance
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   integration:
     <<: *service
@@ -214,7 +214,7 @@ services:
       INTEGRATION_CREDENTIAL_MASTER_KEY: cmVoZWFyc2FsLW1hc3Rlci1rZXktMzItYnl0ZXMhISE=
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   insight:
     <<: *service
@@ -231,7 +231,7 @@ services:
       DATABASE_SCHEMA: insight
     depends_on:
       postgres: { condition: service_healthy }
-      localstack: { condition: service_healthy }
+      floci: { condition: service_healthy }
 
   gateway:
     image: pbl-rehearsal/gateway

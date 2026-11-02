@@ -142,3 +142,35 @@ module "pbl_mail_service_deployer" {
   oidc_provider_arn = aws_iam_openid_connect_provider.github.arn
   policy_json       = data.aws_iam_policy_document.pbl_mail_service_deployer.json
 }
+
+data "aws_iam_policy_document" "pbl_web_deployer" {
+  statement {
+    sid       = "ListSite"
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"] # `aws s3 sync` compares against what is already there
+    resources = [module.web.bucket_arn]
+  }
+
+  statement {
+    sid       = "WriteSite"
+    effect    = "Allow"
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["${module.web.bucket_arn}/*"]
+  }
+
+  statement {
+    sid       = "Invalidate"
+    effect    = "Allow"
+    actions   = ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"]
+    resources = [module.web.distribution_arn]
+  }
+}
+
+module "pbl_web_deployer" {
+  source = "./modules/github_oidc_deployer"
+
+  name              = "pbl-web"
+  github_repo       = "${var.github_owner}/${var.pbl_web_github_repo}"
+  oidc_provider_arn = aws_iam_openid_connect_provider.github.arn
+  policy_json       = data.aws_iam_policy_document.pbl_web_deployer.json
+}

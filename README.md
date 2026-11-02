@@ -1,4 +1,4 @@
-# pbl-infra — AWS deployment for pbl-api + pbl-mail-service
+# pbl-infra — AWS deployment for pbl-api, pbl-mail-service and pbl-web
 
 Terraform-managed AWS infrastructure, run through Terragrunt, backed by AWS
 Activate/education/promo credits.
@@ -9,7 +9,7 @@ Activate/education/promo credits.
 pbl-infra/
 ├── root.hcl                 # root: S3 backend (auto-bootstrapping) + provider, shared by every env
 ├── terraform/               # the actual Terraform module — never applied directly, only via Terragrunt
-│   ├── modules/              # ecr_repository, ecs_cluster, ecs_app, events, lambda_sqs_consumer, sqs_queue, github_oidc_deployer
+│   ├── modules/              # ecr_repository, ecs_cluster, ecs_app, events, lambda_sqs_consumer, sqs_queue, static_site, github_oidc_deployer
 │   └── *.tf
 └── live/
     └── prod/

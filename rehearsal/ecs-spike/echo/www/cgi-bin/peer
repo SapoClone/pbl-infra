@@ -1,0 +1,10 @@
+#!/bin/sh
+# Calls another service the way the real services do (http://<name>:3000); the name is the query string.
+printf 'Content-Type: text/plain\r\n\r\n'
+host="${QUERY_STRING:-inventory}"
+if out=$(wget -q -T 3 -O - "http://$host:3000/cgi-bin/env" 2>&1); then
+  echo "reached $host"
+  echo "$out"
+else
+  echo "cannot reach $host: $out"
+fi

@@ -1,0 +1,5 @@
+#!/bin/sh
+# What the task was started with: its name (an environment value) and the SSM secret (a task definition secret).
+printf 'Content-Type: text/plain\r\n\r\n'
+echo "service=${SERVICE_NAME:-<missing>}"
+echo "secret=${SPIKE_SECRET:-<missing>}"

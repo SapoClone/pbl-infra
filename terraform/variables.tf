@@ -20,6 +20,12 @@ variable "pbl_mail_service_github_repo" {
   default     = "pbl-mail-service"
 }
 
+variable "pbl_web_github_repo" {
+  description = "Repo name (not full path) for pbl-web."
+  type        = string
+  default     = "pbl-web"
+}
+
 # --- Shared / observe.nestjs.com ------------------------------------------
 
 variable "observe_app_key" {

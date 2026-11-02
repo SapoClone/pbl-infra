@@ -83,6 +83,11 @@ run "plan_everything" {
     condition     = length(module.service) == 8
     error_message = "eight backend services"
   }
+
+  assert {
+    condition     = output.web_url == "https://app.sapo.makeasy.id.vn"
+    error_message = "pbl-web is served on app.<domain>"
+  }
 }
 
 run "bad_database_passwords_are_rejected" {
