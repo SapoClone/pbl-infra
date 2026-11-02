@@ -1,15 +1,24 @@
-output "pbl_api_url" {
-  value = "http://${module.pbl_api.alb_dns_name}"
+output "gateway_url" {
+  description = "Public entry point of the backend (the gateway); the ALB DNS name, before the api.* CNAME exists."
+  value       = "https://${module.cluster.alb_dns_name}"
 }
 
 output "pbl_api_ecr_url" {
-  description = "Full repository URL (registry + name) — for reference, not what deploy.yml's AWS_ECR_REPOSITORY variable wants."
+  description = "Full repository URL of the shared service repository, for reference."
   value       = module.pbl_api_ecr.url
 }
 
-output "pbl_api_ecr_name" {
-  description = "Bare repository name. Set as the AWS_ECR_REPOSITORY repo variable in pbl-api — deploy.yml concatenates this with the registry hostname itself, so the full URL here would duplicate it."
-  value       = module.pbl_api_ecr.name
+output "github_actions_variables" {
+  description = "Repository variables for pbl-api (Settings > Secrets and variables > Actions > Variables). Setting AWS_DEPLOYER_ROLE_ARN switches the deploy jobs on. Print with: terragrunt output -raw github_actions_variables"
+  value       = <<-EOT
+    AWS_DEPLOYER_ROLE_ARN         = ${module.pbl_api_deployer.role_arn}
+    AWS_REGION                    = ${var.aws_region}
+    AWS_ECR_REPOSITORY            = ${module.pbl_api_ecr.name}
+    AWS_GATEWAY_ECR_REPOSITORY    = ${module.gateway_ecr.name}
+    AWS_ECS_CLUSTER               = ${module.cluster.cluster_name}
+    GATEWAY_JWKS_URL              = ${local.jwks_url}
+    GATEWAY_CORS_ORIGINS          = https://app.${var.domain_name}
+  EOT
 }
 
 output "pbl_mail_service_ecr_url" {
@@ -36,16 +45,16 @@ output "pbl_mail_service_deployer_role_arn" {
   value       = module.pbl_mail_service_deployer.role_arn
 }
 
-output "pbl_api_ecs_cluster" {
-  value = module.pbl_api.cluster_name
+output "ecs_cluster" {
+  value = module.cluster.cluster_name
 }
 
-output "pbl_api_ecs_service" {
-  value = module.pbl_api.service_name
+output "events_topic_arns" {
+  value = module.events.topic_arns
 }
 
-output "pbl_api_ecs_task_family" {
-  value = module.pbl_api.task_family
+output "events_dlq_arns" {
+  value = module.events.dlq_arns
 }
 
 output "pbl_mail_service_lambda_function_name" {
@@ -83,11 +92,11 @@ output "acm_us_east_1_validation_cname" {
 }
 
 output "pbl_api_cname" {
-  description = "Add this as a CNAME record at iNet to make api.sapo.makeasy.id.vn reach pbl-api's ALB. Print with: terragrunt output -raw pbl_api_cname"
+  description = "Add this as a CNAME record at iNet to make api.sapo.makeasy.id.vn reach the gateway's ALB. Print with: terragrunt output -raw pbl_api_cname"
   value       = <<-EOT
     Type:  CNAME
     Host:  ${trimsuffix("api.${var.domain_name}", ".${var.root_domain}")}
-    Value: ${module.pbl_api.alb_dns_name}
+    Value: ${module.cluster.alb_dns_name}
   EOT
 }
 
@@ -97,5 +106,38 @@ output "image_cdn_cname" {
     Type:  CNAME
     Host:  ${trimsuffix("static.${var.domain_name}", ".${var.root_domain}")}
     Value: ${aws_cloudfront_distribution.images.domain_name}
+  EOT
+}
+
+output "web_url" {
+  value = "https://app.${var.domain_name}"
+}
+
+output "pbl_web_github_actions_variables" {
+  description = "Repository variables for pbl-web (Settings > Secrets and variables > Actions > Variables). Print with: terragrunt output -raw pbl_web_github_actions_variables"
+  value       = <<-EOT
+    AWS_DEPLOYER_ROLE_ARN = ${module.pbl_web_deployer.role_arn}
+    AWS_REGION            = ${var.aws_region}
+    WEB_BUCKET            = ${module.web.bucket_name}
+    WEB_DISTRIBUTION_ID   = ${module.web.distribution_id}
+    VITE_API_URL          = https://api.${var.domain_name}/platform/api/v1
+  EOT
+}
+
+output "acm_web_validation_cname" {
+  description = "Add this as a CNAME record at iNet before the us-east-1 ACM cert for app.* (pbl-web) can validate. Print with: terragrunt output -raw acm_web_validation_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix(tolist(aws_acm_certificate.web.domain_validation_options)[0].resource_record_name, ".${var.root_domain}.")}
+    Value: ${tolist(aws_acm_certificate.web.domain_validation_options)[0].resource_record_value}
+  EOT
+}
+
+output "web_cname" {
+  description = "Add this as a CNAME record at iNet to make app.sapo.makeasy.id.vn reach pbl-web. Print with: terragrunt output -raw web_cname"
+  value       = <<-EOT
+    Type:  CNAME
+    Host:  ${trimsuffix("app.${var.domain_name}", ".${var.root_domain}")}
+    Value: ${module.web.distribution_domain_name}
   EOT
 }

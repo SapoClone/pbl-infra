@@ -1,0 +1,42 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - 'live/**'
+      - '.github/workflows/terraform.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: fmt, validate, offline plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform fmt -check -recursive terraform
+      # Terragrunt generates the provider blocks in real runs; the checks need the same two.
+      - name: Write the provider file Terragrunt would generate
+        working-directory: terraform
+        run: |
+          cat > provider.tf <<'TF'
+          provider "aws" {
+            region = "ap-southeast-1"
+          }
+          provider "aws" {
+            alias  = "us_east_1"
+            region = "us-east-1"
+          }
+          TF
+      - run: terraform init -backend=false -input=false
+        working-directory: terraform
+      - run: terraform validate
+        working-directory: terraform
+      # Plans the whole stack against a mocked AWS provider: wiring errors without credentials.
+      - run: terraform test
+        working-directory: terraform
