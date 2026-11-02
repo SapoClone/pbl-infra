@@ -121,7 +121,10 @@
         "platform.branch.updated",
         "platform.account.logged_in",
         "platform.membership.granted",
-        "platform.membership.role_changed"
+        "platform.membership.role_changed",
+        "platform.tenant.created",
+        "platform.tenant.updated",
+        "platform.tenant.status_changed"
       ],
       "catalog": [
         "catalog.product.created",
