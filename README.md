@@ -89,8 +89,8 @@ This Terraform provisions all of it ([deployment runbook](DEPLOY-BACKEND.md)):
 - the secrets every service needs as SSM parameters (`/pbl/shared`, `/pbl/<service>`, `/pbl/platform`),
   including `INTERNAL_S2S_TOKEN`, without which the services refuse service-to-service calls.
 
-The AWS resources are currently destroyed to save credits; the Terraform is kept
-and re-applied when a deployment is needed. `rehearsal/` runs the same images, roles and event bus
+To save credits, pause the services or stop the cluster and ALB between uses: see
+[PAUSE-AND-RESUME.md](PAUSE-AND-RESUME.md). `rehearsal/` runs the same images, roles and event bus
 on one machine, which is how a change here is checked without AWS.
 
 ## Domain & HTTPS

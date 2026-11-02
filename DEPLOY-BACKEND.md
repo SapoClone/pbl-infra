@@ -9,8 +9,8 @@ Eight services and the gateway on ECS Fargate, behind one ALB, on Neon, Upstash 
 - AWS credentials for the account (`aws sts get-caller-identity` works), Terraform >= 1.5 and Terragrunt.
 - A Neon database (use the **direct**, non-pooled host) and an Upstash Redis.
 - DNS: you add CNAMEs by hand at iNet (no Route53); the `*_cname` outputs say which.
-- Cost: about nine small Fargate tasks plus an ALB, roughly 90 to 130 USD a month in ap-southeast-1 (an estimate).
-  Destroy it when you are done: `terragrunt destroy` from `live/prod`.
+- Cost: about nine small Fargate tasks plus an ALB, about 186 USD a month in ap-southeast-1 at on-demand prices.
+  Pause or stop it between uses: [PAUSE-AND-RESUME.md](PAUSE-AND-RESUME.md).
 
 ## 1. Secrets
 
