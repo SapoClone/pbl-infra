@@ -10,6 +10,17 @@
     "sales"
   ],
   "queues": {
+    "catalog": {
+      "platform": [
+        "platform.subscription.changed",
+        "platform.plan.changed"
+      ]
+    },
+    "platform": {
+      "catalog": [
+        "catalog.usage.changed"
+      ]
+    },
     "sales": {
       "platform": [
         "platform.branch.created",
