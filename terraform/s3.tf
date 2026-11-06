@@ -32,3 +32,47 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
     }
   }
 }
+
+# Browsers upload straight to the bucket with a presigned PUT that catalog issues (pbl-api docs/guides/uploads.md).
+# Reads still go through CloudFront; GET/HEAD here only serve a direct link.
+resource "aws_s3_bucket_cors_configuration" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  cors_rule {
+    allowed_origins = ["https://app.${var.domain_name}"]
+    allowed_methods = ["PUT", "GET", "HEAD"]
+    allowed_headers = ["Content-Type", "Content-Length", "x-amz-*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
+
+# Housekeeping the API cannot do: half-finished multipart uploads, and anything under tmp/ (scratch objects).
+# Unattached images are deleted by catalog's own cleanup job, so nothing else expires here.
+resource "aws_s3_bucket_lifecycle_configuration" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+
+  rule {
+    id     = "expire-tmp"
+    status = "Enabled"
+
+    filter {
+      prefix = "tmp/"
+    }
+
+    expiration {
+      days = 1
+    }
+  }
+}
