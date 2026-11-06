@@ -24,7 +24,9 @@
     "sales": {
       "platform": [
         "platform.branch.created",
-        "platform.branch.updated"
+        "platform.branch.updated",
+        "platform.tenant.status_changed",
+        "platform.subscription.changed"
       ],
       "catalog": [
         "catalog.product.created",
@@ -99,7 +101,9 @@
     "integration": {
       "platform": [
         "platform.branch.created",
-        "platform.branch.updated"
+        "platform.branch.updated",
+        "platform.tenant.status_changed",
+        "platform.subscription.changed"
       ],
       "catalog": [
         "catalog.product.created",

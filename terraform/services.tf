@@ -73,6 +73,13 @@ locals {
   service_environment = {
     sales       = { INVENTORY_URL = "http://inventory:${local.service_port}" }
     integration = { SALES_SERVICE_URL = "http://sales:${local.service_port}" }
+    # platform asks these services whether a branch can be deactivated or deleted (pbl-api docs/guides/branch-guard.md);
+    # the call carries INTERNAL_S2S_TOKEN, which every task already has
+    platform = {
+      INVENTORY_SERVICE_URL   = "http://inventory:${local.service_port}"
+      SALES_SERVICE_URL       = "http://sales:${local.service_port}"
+      INTEGRATION_SERVICE_URL = "http://integration:${local.service_port}"
+    }
   }
 
   # SSM parameter ARNs by env var name
