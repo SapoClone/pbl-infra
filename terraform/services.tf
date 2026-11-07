@@ -80,6 +80,14 @@ locals {
       SALES_SERVICE_URL       = "http://sales:${local.service_port}"
       INTEGRATION_SERVICE_URL = "http://integration:${local.service_port}"
     }
+
+    # catalog issues presigned PUT URLs for the images bucket and links products to the CloudFront domain
+    catalog = {
+      UPLOADS_DRIVER          = "s3"
+      AWS_S3_BUCKET           = aws_s3_bucket.images.id
+      AWS_S3_REGION           = var.aws_region
+      UPLOADS_PUBLIC_BASE_URL = "https://static.${var.domain_name}"
+    }
   }
 
   # SSM parameter ARNs by env var name
@@ -162,12 +170,24 @@ data "aws_iam_policy_document" "task" {
   }
 
   dynamic "statement" {
-    for_each = each.key == "platform" ? [1] : []
+    for_each = contains(["platform", "catalog"], each.key) ? [1] : []
     content {
       sid       = "Images"
       effect    = "Allow"
       actions   = ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"]
       resources = ["${aws_s3_bucket.images.arn}/*"]
+    }
+  }
+
+  # Catalog HEADs an object after the upload. Without s3:ListBucket S3 answers 403 instead of 404 for a missing
+  # key, so "not uploaded yet" would look like an access error.
+  dynamic "statement" {
+    for_each = each.key == "catalog" ? [1] : []
+    content {
+      sid       = "ImagesList"
+      effect    = "Allow"
+      actions   = ["s3:ListBucket"]
+      resources = [aws_s3_bucket.images.arn]
     }
   }
 }
