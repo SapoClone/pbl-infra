@@ -153,7 +153,7 @@
 <header class="top">
   <div class="wrap">
     <a class="back" href="index.html">&larr; PBL6 docs</a>
-    <div class="eyebrow">OmniRetail · PBL6 · status on 6 November 2026</div>
+    <div class="eyebrow">OmniRetail · PBL6 · status on 7 November 2026</div>
     <h1>What we have, and what is missing</h1>
     <p>A multi-store retail and point-of-sale platform: eight backend services deployed as a full stack, a React web app, a Flutter mobile app, and a Figma design with 50 screens.</p>
     <nav class="toc" aria-label="Sections">
@@ -174,12 +174,12 @@
 
   <section id="at-a-glance">
     <h2>At a glance</h2>
-    <p class="verdict">The backend is far ahead of everything else, and since 31 October it grew in three ways: all eight services now have real logic on <code>main</code> (the contributor work was adopted), the full stack is defined for AWS, and the <b>platform admin API is built</b> (store, plan, subscription, usage, account, admin and settings endpoints, with plan limits enforced), waiting in four open pull requests. The admin API serves 12 of the 23 admin screens completely and 2 in part; <b>monitoring, integrations, failed jobs, the audit log, notices and support sessions have no endpoint yet</b>. The mobile app still does not exist, and the tenant-screen table below was last audited on 31 October. Email flows (invitation, password reset) are still missing.</p>
+    <p class="verdict">The backend is far ahead of everything else, and since 31 October it grew in three ways: all eight services now have real logic on <code>main</code> (the contributor work was adopted), the full stack is defined for AWS, and the <b>platform admin API and the business rules of branches, warehouses, stock moves, cash shifts and plans are built and on <code>main</code></b> (store, plan, subscription, usage, account, admin and settings endpoints; plan limits and plan expiry; a default warehouse per branch; a branch guard; a cash drawer with counting and manager approval; stock integrity fixes; S3 image uploads). The admin API serves 12 of the 23 admin screens completely and 2 in part; <b>monitoring, integrations, failed jobs, the audit log, notices and support sessions have no endpoint yet</b>. The mobile app still does not exist, and the tenant-screen table below was last audited on 31 October. Email flows (invitation, password reset) are still missing.</p>
     <div class="tiles">
       <div class="tile">
-        <div class="num">392</div>
-        <p class="what">API routes live on <code>main</code>, in 8 services; 30 more are in open pull requests</p>
-        <p class="src">401 gateway entries with health checks · krakend.json @ 2ff1fd4</p>
+        <div class="num">432</div>
+        <p class="what">API routes live on <code>main</code>, in 8 services (up from 392 on 6 November)</p>
+        <p class="src">441 gateway entries with health checks · krakend.json @ c086346</p>
       </div>
       <div class="tile">
         <div class="num">8<small> of 18</small></div>
@@ -194,7 +194,7 @@
       <div class="tile">
         <div class="num">12<small> of 23</small></div>
         <p class="what">admin screens whose API is fully built (2 more in part); the web has them on mock data in an unmerged branch. The 8 mobile screens still have APIs but no app</p>
-        <p class="src">contract 04 build status · pbl-api #33, #35 to #38 · pbl-web #7</p>
+        <p class="src">contract 04 build status · pbl-api #49 · pbl-web #7</p>
       </div>
     </div>
   </section>
@@ -206,10 +206,10 @@
       <table>
         <thead><tr><th>Repository</th><th>State</th><th>What stands out</th></tr></thead>
         <tbody>
-          <tr><td><b>pbl-api</b><span class="id">main 2ff1fd4 · 3 Nov</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>All eight services have real logic: the M1 to M6 work was adopted and converted to our permissions, branch scope and integer VND. Admin sign-in is on <code>main</code>. <b>Four pull requests are open and stacked</b>: #35 admin API for stores, plans, subscriptions and usage; #36 plan limits (409 <code>Q001</code>); #37 accounts, platform admins and settings; #38 duties on staff shifts and who sold what. The stack only ran the title check on GitHub, so it was tested locally.</td></tr>
+          <tr><td><b>pbl-api</b><span class="id">main c086346 · 7 Nov</span></td><td><span class="badge ready"><span class="g">●</span>Strong</span></td><td>All eight services have real logic: the M1 to M6 work was adopted and converted to our permissions, branch scope and integer VND. The platform admin API, plan limits, duties on staff shifts and who sold what, and wave 1 of the business rules landed in #49: a default warehouse per branch, a guard on deleting or deactivating a branch, the cash session, plan expiry with 7 days of grace, S3 image uploads and stock integrity fixes. Nothing is open. Earlier stacked pull requests had merged into stale branches, so #49 re-landed their content on <code>main</code>, tested as one tree.</td></tr>
           <tr><td><b>pbl-web</b><span class="id">main fb88c53 · 2 Nov</span></td><td><span class="badge partial"><span class="g">◐</span>Grown, not re-audited</span></td><td>Since 31 October it gained retail management modules, auth onboarding with staff and store settings, a logout and branch-management flow, and a deploy to S3 and CloudFront. How many screens call the real API was not re-checked. The admin portal (23 screens on mock data, <code>feature/web-admin-01</code>) is being merged in #7; its calls map onto the real endpoints in the platform admin API guide, and a demo sign-in fix is in #6.</td></tr>
           <tr><td><b>pbl-mobile</b><span class="id">main 6253bec · 29 Aug</span></td><td><span class="badge missing"><span class="g">○</span>Template</span></td><td>An untouched Flutter template: one placeholder page, a sign-in path that does not exist on the gateway, the template app id, a purple palette and no Vietnamese locale.</td></tr>
-          <tr><td><b>pbl-infra</b><span class="id">main fa396f4 · 6 Nov</span></td><td><span class="badge ready"><span class="g">●</span>Defined</span></td><td>Terraform defines all eight services and the gateway on ECS, the SNS and SQS event topology (generated from <code>topology.ts</code>; the latest change adds queues for catalog and platform, #12), and pbl-web on S3 and CloudFront, with a pause and resume runbook to save credits. The ERD changes (#6) are merged and #5 is closed. A real apply and a smoke test of the deployed gateway are not verified from the repository.</td></tr>
+          <tr><td><b>pbl-infra</b><span class="id">main 414e126 · 7 Nov</span></td><td><span class="badge ready"><span class="g">●</span>Defined</span></td><td>Terraform defines all eight services and the gateway on ECS, the SNS and SQS event topology (generated from <code>topology.ts</code>; the latest changes add queues for catalog and platform (#12), plan and status events for sales and integration, and the branch guard URLs for platform (#15)), pbl-web on S3 and CloudFront, and the image bucket's CORS and access for browser uploads (#14), with a pause and resume runbook to save credits. The ERD changes (#6) are merged and #5 is closed. A real apply and a smoke test of the deployed gateway are not verified from the repository.</td></tr>
           <tr><td><b>pbl-mail-service</b><span class="id">main 5295d00 · 11 Sep</span></td><td><span class="badge partial"><span class="g">◐</span>One template</span></td><td>Sends the email-verification message. Invitation, password-reset and renewal emails do not exist.</td></tr>
         </tbody>
       </table>
@@ -277,7 +277,7 @@
         <div class="group-head"><h3>Platform admin · 23 screens</h3><span class="badge partial"><span class="g">◐</span>API half built</span></div>
         <div class="bar" role="img" aria-label="Platform admin API: 12 ready, 2 partial, 9 missing"><span class="s-ready" style="width:52.2%"></span><span class="s-part" style="width:8.7%"></span><span class="s-miss" style="width:39.1%"></span></div>
         <div class="bar-key"><span><i style="background:var(--brand)"></i>12 ready</span><span><i style="background:#d9a21b"></i>2 partial</span><span><i style="background:#c4473b"></i>9 missing</span><span class="src">API readiness</span></div>
-        <p>Admin identity is on <code>main</code>; the rest is in open pull requests #35 to #38. <b>31 of the 52 endpoints of contract 04 are built</b>: admin sign-in, businesses (list, detail, create, edit, lock, reactivate), users and platform admins, plans, subscriptions with payments and change of plan, usage limits, and settings. <b>Partial:</b> business detail and user detail lack their activity tabs (the audit log). <b>Missing:</b> overview, system monitoring, integrations, failed jobs and their detail, activity log, notices and composing one, and technical support. The web has all 23 screens on mock data in an unmerged branch.</p>
+        <p>The admin API is on <code>main</code>. <b>31 of the 52 endpoints of contract 04 are built</b>: admin sign-in, businesses (list, detail, create, edit, lock, reactivate), users and platform admins, plans, subscriptions with payments and change of plan, usage limits, and settings. <b>Partial:</b> business detail and user detail lack their activity tabs (the audit log). <b>Missing:</b> overview, system monitoring, integrations, failed jobs and their detail, activity log, notices and composing one, and technical support. The web has all 23 screens on mock data in an unmerged branch.</p>
         <details>
           <summary>All 23 screens</summary>
           <ol class="cols">
@@ -306,16 +306,16 @@
 
   <section id="have">
     <h2>What the backend gives us today</h2>
-    <p class="lede">Routes are counted on <code>main</code>, behind the gateway, with permissions and branch scope on every route. The admin API in the four open pull requests adds 28 platform routes and 2 sales routes.</p>
+    <p class="lede">Routes are counted on <code>main</code>, behind the gateway, with permissions and branch scope on every route. The admin API, shifts and the cash session since 6 November added 29 platform routes, 11 sales routes and 1 catalog route.</p>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Service</th><th class="num">Routes</th><th>What it does</th></tr></thead>
         <tbody>
-          <tr><td><b>platform</b></td><td class="num">52</td><td>Sign-in, refresh, sessions, login lockout; stores and branches; members; roles, a permission catalog and branch assignment; branch settings; staff schedules; the context call a frontend uses to build its menus; <b>admin sign-in and the first-admin command</b>. In open pull requests: stores, plans, subscriptions, usage, accounts, admins and settings for the admin, plan limits, and duties on shifts with who is on duty</td></tr>
-          <tr><td><b>catalog</b></td><td class="num">48</td><td>Products with variants (SKU and barcode unique per store), categories, brands, attributes, price lists, image and import uploads, CSV import and export; in an open pull request it refuses products and files over the plan</td></tr>
+          <tr><td><b>platform</b></td><td class="num">81</td><td>Sign-in, refresh, sessions, login lockout; stores and branches; members; roles, a permission catalog and branch assignment; branch settings; staff schedules; the context call a frontend uses to build its menus; <b>the platform admin</b> (sign-in, the first-admin command, stores, plans, subscriptions, usage, accounts, admins and settings); plan limits and plan expiry with 7 days of grace; a branch guard; duties on shifts with who is on duty</td></tr>
+          <tr><td><b>catalog</b></td><td class="num">49</td><td>Products with variants (SKU and barcode unique per store), categories, brands, attributes, price lists, image and import uploads, CSV import and export; refuses products and files over the plan; image uploads straight to S3 with presigned URLs</td></tr>
           <tr><td><b>customer</b></td><td class="num">45</td><td>Customers with readable codes, groups, tags, addresses, loyalty points, holds and tiers; spend and points update from completed orders; phone hidden without permission</td></tr>
-          <tr><td><b>inventory</b></td><td class="num">59</td><td>Stock per warehouse and branch, reservations, ledger, receipts, issues, transfers, stock takes, suppliers, purchase orders</td></tr>
-          <tr><td><b>sales</b></td><td class="num">63</td><td>Orders from draft to complete or cancel, checkout with stock holds, payments, returns and refunds, promotions and coupons, POS shifts with cash reconciliation, registers, channels, shipping providers; in an open pull request, who sold what per staff member</td></tr>
+          <tr><td><b>inventory</b></td><td class="num">58</td><td>Stock per warehouse and branch, reservations, ledger, receipts, issues, transfers, stock takes, suppliers, purchase orders</td></tr>
+          <tr><td><b>sales</b></td><td class="num">74</td><td>Orders from draft to complete or cancel, checkout with stock holds, payments, returns and refunds, promotions and coupons, POS shifts with cash reconciliation, registers, channels, shipping providers; the cash drawer (entries, count, tolerance, manager approval); who sold what per staff member</td></tr>
           <tr><td><b>finance</b></td><td class="num">59</td><td>Cash book, receivables and payables, refunds and settlements, COD reconciliation, shipping</td></tr>
           <tr><td><b>integration</b></td><td class="num">27</td><td>Marketplace connections, SKU mapping, external order intake, inventory publishing and sync jobs (the marketplaces are simulated; no real marketplace is connected)</td></tr>
           <tr><td><b>insight</b></td><td class="num">39</td><td>Dashboard KPIs and summaries, projections with rebuild and reconciliation, report export, notifications, attention feed, audit log. No admin read models yet</td></tr>
@@ -326,12 +326,12 @@
     <h3>How it was checked</h3>
     <div class="two">
       <div class="box"><ul>
-        <li><b>CI on #35</b> (the first of the open stack): every check passed (lint, libraries, each service's build and test, integration, docs). #36 to #38 are stacked, so GitHub ran only the title check on them.</li>
+        <li><b>CI on #49</b> (the one pull request into <code>main</code>): lint, libraries, each service's build and test, integration and docs ran on it as a single tree before the merge.</li>
         <li><b>Run locally on the stack</b> (5 to 6 November): platform 845 unit and 120 integration tests, sales 417 unit and 69 integration, catalog 108 unit and 30 integration, insight 183, architecture 85. Two tests of an internal HTTP client in <code>libs</code> fail on this machine's Node version and also on <code>main</code>.</li>
         <li><b>The real app:</b> a scratch database run showed a second branch on <code>free</code> answering 409, revoking an account's sessions turning its token from 200 to 401, and a disabled admin's token turning 401 at once.</li>
       </ul></div>
       <div class="box"><ul>
-        <li><b>Gateway config:</b> KrakenD accepts all 431 entries of the stack and the gateway boots with them; every controller route is declared there.</li>
+        <li><b>Gateway config:</b> KrakenD accepts all 441 entries and the gateway boots with them; every controller route is declared there.</li>
         <li><b>Not re-run for this update:</b> the end-to-end scripts through the gateway (first-wave 248 checks, permissions 142), last run on 31 October.</li>
       </ul></div>
     </div>
@@ -365,7 +365,7 @@
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
         <tr><td><b>Web and mobile clients</b></td><td>Nothing in the design is usable until a client shows it. The web app has one screen on a real API (sign-in); the mobile app is a template. Frontend work needs the API client, theme tokens, the Vietnamese locale and the top bar first.</td><td><span class="size">L</span></td></tr>
-        <tr><td><b>Merging the open admin stack</b></td><td>Pull requests #35 to #38 (and web #7) hold the admin API, plan limits, accounts, admins, settings and shifts. They merge in order, with pbl-infra #12 already in place, so the new queues exist before the consumers start.</td><td><span class="size">review</span></td></tr>
+        <tr><td><b>Wave 2 of the business rules</b></td><td>Overnight shift schedules, staff names kept after a member leaves, revenue net of returns, a salesperson seeing their own rows, and the audit log with an actor type and branch filter. All decided, not built.</td><td><span class="size">M</span></td></tr>
       </tbody>
     </table></div>
 
@@ -384,7 +384,7 @@
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
         <tr><td><b>Stock receipts and purchase-order receiving</b></td><td>Receipts apply at once; there is no draft, approval, lot or expiry, and goods cannot be received against an order. Average cost and stock value are also missing.</td><td><span class="size">M</span></td></tr>
-        <tr><td><b>Work shifts, finishing</b></td><td>Scheduled shifts have duties and a "who is on duty" call, and sales answers who sold what. Not built: a dated roster (swaps, days off), linking a register shift to the scheduled one, and sales net of returns.</td><td><span class="size">M</span></td></tr>
+        <tr><td><b>Work shifts, finishing</b></td><td>Scheduled shifts have duties and a "who is on duty" call, the cash drawer is built (entries, count, tolerance, approval) and sales answers who sold what. Not built: a dated roster (swaps, days off), reading the weekly schedule when a register opens, and sales net of returns.</td><td><span class="size">M</span></td></tr>
         <tr><td><b>Events for admin actions</b></td><td>Platform now emits store, plan and subscription events and catalog emits usage, but admin actions that belong to no store (creating an admin, changing settings, ending an account's sessions) emit nothing, because events carry a store.</td><td><span class="size">M</span></td></tr>
         <tr><td><b>Image upload and imports</b></td><td>Product images, product and customer file import, and push sending are all unbuilt.</td><td><span class="size">M</span></td></tr>
       </tbody>
@@ -414,12 +414,12 @@
   <section id="decide">
     <h2>Decisions that need people</h2>
     <ol class="decide">
-      <li><b>Plan prices and limits.</b> The seed uses the contract's examples (free 1 branch, 3 users, 100 products, 1 GB; basic 299,000 VND; pro 599,000 VND). Those numbers are enforced now, so the team should confirm or change them in the admin.</li>
-      <li><b>Trial length</b> and whether a new store starts on a trial of a paid plan or on free (it starts on free today).</li>
-      <li><b>Platform-scope audit.</b> Admin actions that belong to no store need their own audit design before the audit log and the admin events can be built.</li>
+      <li><b>Plan prices and limits.</b> The seed uses the contract's examples (free 1 branch, 3 users, 100 products, 1 GB; basic 299,000 VND; pro 599,000 VND). Those numbers are enforced now, and an expired plan drops to free after 7 days, so the team should confirm or change them in the admin.</li>
+      <li><b>Old branch assignments.</b> Some members still point at branches that were deleted before the branch guard existed. Give them back their remaining branches, ask the owner to reassign, or leave them: the system cannot decide, because removing them would turn those members into "every branch" members.</li>
+      <li><b>Payment confirmation at the till.</b> A card or QR payment is confirmed on the cashier's word (a reference is required and who confirmed is recorded). Decide whether it must be verified with the payment provider before the sale completes.</li>
+      <li><b>Platform-scope audit.</b> Admin actions that belong to no store (creating an admin, changing settings, ending an account's sessions) need their own audit design before they can emit events.</li>
       <li><b>Two-factor sign-in for platform admins</b> before production use.</li>
-      <li><b>Which settings should take effect.</b> The security settings (lockout, reset link, retention) are stored and validated but not applied.</li>
-      <li><b>What to build next:</b> the insight read models (overview, monitoring, failed jobs, audit log, notices), the integration admin views, or support sessions.</li>
+      <li><b>What to build next:</b> wave 2 of the business rules (overnight schedules, staff names kept, net revenue, the audit log), the insight read models for the admin (overview, monitoring, failed jobs, notices), the integration admin views, or support sessions.</li>
     </ol>
   </section>
 
@@ -427,12 +427,12 @@
     <h2>Risks to know about</h2>
     <div class="two">
       <div class="box">
-        <h3>In the open pull requests</h3>
+        <h3>To do when deploying the new code</h3>
         <ul>
-          <li>Four stacked pull requests ran only the title check on GitHub; they were tested locally and on a scratch run of the real app.</li>
-          <li>Catalog and platform become event consumers: deploy pbl-infra #12 (merged) before the API, or the new consumers have no queue.</li>
-          <li>A store older than the plan events has no limit in catalog until its next plan event; there is no resync job.</li>
-          <li>Plan-limit numbers, usage and admin counts for products and storage lag by the event delivery time.</li>
+          <li>Apply pbl-infra #14 and #15 first (image bucket access, plan and status events, the branch guard URLs); catalog and platform are event consumers, and the platform calls inventory, sales and integration when a branch is deactivated.</li>
+          <li>Rebuild the catalog image (it gains two AWS packages) and run the plan resync once after catalog's projection is deployed, or stores older than the limits stay unlimited in catalog.</li>
+          <li>Nothing ran against real S3, a browser upload through the bucket's CORS rule, or CloudFront.</li>
+          <li>A store suspended before sales and integration got the status copy counts as active there until its next status event.</li>
         </ul>
       </div>
       <div class="box">
@@ -452,9 +452,9 @@
 
 <footer id="sources">
   <div class="wrap">
-    <p><b>Where the numbers come from.</b> Route counts: <code>krakend/krakend.json</code> on main (2ff1fd4) and on the open stack (431 entries). Tests and checks: CI on #35 and local runs on 5 to 6 November 2026. Admin coverage: the build status in contract 04. Tenant screen coverage: the 31 October audit. Web and mobile state: commits in each repository on 6 November. Open pull requests: GitHub on 6 November.</p>
+    <p><b>Where the numbers come from.</b> Route counts: <code>krakend/krakend.json</code> on main (c086346, 441 entries). Tests and checks: CI on #49 and local runs on 5 to 7 November 2026 (platform 898, catalog 122, inventory 414, sales 490 unit tests; platform integration 143; 22 integration and system suites, 380 tests). Admin and business-rule coverage: the build status in contract 04 and the review's section 9. Tenant screen coverage: the 31 October audit. Web and mobile state: commits in each repository on 7 November.</p>
     <p><b>Not verified.</b> The tenant-screen readiness table and the web app's wiring were not re-audited after the adoption of the M1 to M6 services. Whether the Figma fixes were applied is unknown. Sizes are judgements.</p>
-    <p><b>Keeping it current.</b> This page is <code>docs/status.html</code> in the pbl-infra repository. To update it, edit the file and merge to <code>main</code>; GitHub Pages republishes it within a minute. Last updated 6 November 2026.</p>
+    <p><b>Keeping it current.</b> This page is <code>docs/status.html</code> in the pbl-infra repository. To update it, edit the file and merge to <code>main</code>; GitHub Pages republishes it within a minute. Last updated 7 November 2026.</p>
   </div>
 </footer>
 
