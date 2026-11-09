@@ -13,7 +13,9 @@
     "catalog": {
       "platform": [
         "platform.subscription.changed",
-        "platform.plan.changed"
+        "platform.plan.changed",
+        "platform.branch.created",
+        "platform.branch.updated"
       ]
     },
     "platform": {
