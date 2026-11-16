@@ -71,8 +71,19 @@ locals {
   }
 
   service_environment = {
-    sales       = { INVENTORY_URL = "http://inventory:${local.service_port}" }
-    integration = { SALES_SERVICE_URL = "http://sales:${local.service_port}" }
+    sales = { INVENTORY_URL = "http://inventory:${local.service_port}" }
+    integration = {
+      SALES_SERVICE_URL            = "http://sales:${local.service_port}"
+      LAZADA_LIVE_ENABLED          = var.lazada_live_enabled ? "true" : "false"
+      LAZADA_APP_KEY               = var.lazada_app_key
+      LAZADA_REGION                = var.lazada_region
+      LAZADA_API_BASE_URL          = var.lazada_api_base_url
+      LAZADA_AUTH_URL              = var.lazada_auth_url
+      LAZADA_AUTH_API_BASE_URL     = var.lazada_auth_api_base_url
+      LAZADA_AUTH_TOKEN_URL        = var.lazada_auth_api_base_url
+      LAZADA_CALLBACK_URL          = var.lazada_callback_url != "" ? var.lazada_callback_url : "https://api.${var.domain_name}/api/v1/integrations/lazada/callback"
+      LAZADA_FRONTEND_REDIRECT_URL = var.lazada_frontend_redirect_url != "" ? var.lazada_frontend_redirect_url : "https://app.${var.domain_name}/settings/integrations"
+    }
     # platform asks these services whether a branch can be deactivated or deleted (pbl-api docs/guides/branch-guard.md);
     # the call carries INTERNAL_S2S_TOKEN, which every task already has
     platform = {
@@ -101,6 +112,12 @@ locals {
     APP_SWAGGER_PASSWORD      = aws_ssm_parameter.platform["APP_SWAGGER_PASSWORD"].arn
   }
 
+  integration_secret_arns = {
+    INTEGRATION_CREDENTIAL_MASTER_KEY = aws_ssm_parameter.integration_master_key.arn
+    LAZADA_APP_SECRET                 = aws_ssm_parameter.integration_lazada["LAZADA_APP_SECRET"].arn
+    LAZADA_OAUTH_STATE_SECRET         = aws_ssm_parameter.integration_lazada["LAZADA_OAUTH_STATE_SECRET"].arn
+  }
+
   service_secrets = {
     for name in keys(local.services) : name => merge(
       {
@@ -109,7 +126,7 @@ locals {
         INTERNAL_S2S_TOKEN = aws_ssm_parameter.shared["INTERNAL_S2S_TOKEN"].arn
       },
       name == "platform" ? local.platform_secret_arns : {},
-      name == "integration" ? { INTEGRATION_CREDENTIAL_MASTER_KEY = aws_ssm_parameter.integration_master_key.arn } : {},
+      name == "integration" ? local.integration_secret_arns : {},
     )
   }
 }

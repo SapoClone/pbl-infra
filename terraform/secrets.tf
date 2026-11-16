@@ -23,6 +23,11 @@ locals {
     APP_SWAGGER_USER          = var.swagger_user
     APP_SWAGGER_PASSWORD      = var.swagger_password
   }
+
+  integration_lazada_secrets = {
+    LAZADA_APP_SECRET         = var.lazada_app_secret
+    LAZADA_OAUTH_STATE_SECRET = var.lazada_oauth_state_secret
+  }
 }
 
 resource "aws_ssm_parameter" "shared" {
@@ -53,4 +58,12 @@ resource "aws_ssm_parameter" "integration_master_key" {
   name  = "/pbl/integration/INTEGRATION_CREDENTIAL_MASTER_KEY"
   type  = "SecureString"
   value = var.integration_credential_master_key
+}
+
+resource "aws_ssm_parameter" "integration_lazada" {
+  for_each = nonsensitive(toset(keys(local.integration_lazada_secrets)))
+
+  name  = "/pbl/integration/${each.key}"
+  type  = "SecureString"
+  value = local.integration_lazada_secrets[each.key]
 }

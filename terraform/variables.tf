@@ -99,6 +99,68 @@ variable "integration_credential_master_key" {
   sensitive   = true
 }
 
+variable "lazada_live_enabled" {
+  description = "Enable live Lazada Open Platform OAuth and API calls in the integration service."
+  type        = bool
+  default     = false
+}
+
+variable "lazada_app_key" {
+  description = "Lazada Open Platform Seller In-house App Key (client_id / app_key)."
+  type        = string
+  default     = ""
+}
+
+variable "lazada_app_secret" {
+  description = "Lazada Open Platform Seller In-house App Secret (stored in SSM Parameter Store as SecureString)."
+  type        = string
+  sensitive   = true
+  default     = "placeholder-lazada-app-secret-not-yet-configured"
+}
+
+variable "lazada_oauth_state_secret" {
+  description = "Secret key used to sign and verify Lazada OAuth state tokens (HMAC-SHA256). Generate: openssl rand -hex 32"
+  type        = string
+  sensitive   = true
+  default     = "placeholder-lazada-oauth-state-secret-not-yet-configured"
+}
+
+variable "lazada_region" {
+  description = "Lazada country/market region code (VN)."
+  type        = string
+  default     = "VN"
+}
+
+variable "lazada_api_base_url" {
+  description = "Lazada Open Platform REST API base URL for Vietnam market."
+  type        = string
+  default     = "https://api.lazada.vn/rest"
+}
+
+variable "lazada_auth_url" {
+  description = "Lazada Seller OAuth authorization page URL."
+  type        = string
+  default     = "https://auth.lazada.com/oauth/authorize"
+}
+
+variable "lazada_auth_api_base_url" {
+  description = "Lazada Open Platform authentication API base URL (/auth/token/create and /auth/token/refresh)."
+  type        = string
+  default     = "https://auth.lazada.com/rest"
+}
+
+variable "lazada_callback_url" {
+  description = "Public HTTPS Lazada OAuth callback URL routed through KrakenD. Defaults to https://api.<domain_name>/api/v1/integrations/lazada/callback when empty."
+  type        = string
+  default     = ""
+}
+
+variable "lazada_frontend_redirect_url" {
+  description = "Frontend URL to redirect seller browser after Lazada OAuth callback completes. Defaults to https://app.<domain_name>/settings/integrations when empty."
+  type        = string
+  default     = ""
+}
+
 variable "auth_forgot_secret" {
   type      = string
   sensitive = true
