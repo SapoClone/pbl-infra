@@ -16,5 +16,7 @@ terraform {
 }
 
 inputs = {
-  github_owner = "SapoClone"
+  github_owner        = "SapoClone"
+  domain_name         = "sai.makeasy.id.vn"
+  lazada_callback_url = "https://api.sai.makeasy.id.vn/api/v1/integrations/lazada/callback"
 }
