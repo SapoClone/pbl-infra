@@ -296,7 +296,7 @@
         <div class="group-head"><h3>Platform admin · 23 screens</h3><span class="badge partial"><span class="g">◐</span>API half built</span></div>
         <div class="bar" role="img" aria-label="Platform admin API: 12 ready, 2 partial, 9 missing"><span class="s-ready" style="width:52.2%"></span><span class="s-part" style="width:8.7%"></span><span class="s-miss" style="width:39.1%"></span></div>
         <div class="bar-key"><span><i style="background:var(--brand)"></i>12 ready</span><span><i style="background:#d9a21b"></i>2 partial</span><span><i style="background:#c4473b"></i>9 missing</span><span class="src">API readiness</span></div>
-        <p>The admin API is on <code>main</code>. <b>31 of the 52 endpoints of contract 04 are built</b>: admin sign-in, businesses (list, detail, create, edit, lock, reactivate), users and platform admins, plans, subscriptions with payments and change of plan, usage limits, and settings. <b>Partial:</b> business detail and user detail lack their activity tabs (the audit log). <b>Missing:</b> overview, system monitoring, integrations, failed jobs and their detail, activity log, notices and composing one, and technical support. The web has all 23 screens on mock data in an unmerged branch; none calls the API, and there is no admin sign-in page.</p>
+        <p>The admin API is on <code>main</code> (updated 21 November). Built: admin sign-in, businesses (list, detail, create, edit, lock, reactivate), users and platform admins, plans, subscriptions with payments and change of plan, usage limits and settings; and, since 20 November, <b>the dashboard (overview, daily transactions, watchlist), the platform-wide activity log, system announcements with scheduled sending, the integration connections view (list, detail, sync history, webhooks, check, disconnect) and technical support sessions with a read-only token</b>. The activity log records every admin write with the admin's name and role. <b>Not built:</b> system monitoring and failed jobs (removed from the admin menu), and the audit of <i>refused</i> admin actions. The web has all 23 screens on mock data in an unmerged branch; none calls the API, and there is no admin sign-in page. The v1.2 request document lists what the web must change (lowercase enums, Shopee and Lazada only, support-token handling).</p>
         <details>
           <summary>All 23 screens</summary>
           <ol class="cols">
@@ -429,7 +429,7 @@
     <div class="tablewrap"><table>
       <thead><tr><th>Gap</th><th>Why it matters</th><th>Size</th></tr></thead>
       <tbody>
-        <tr><td><b>Platform admin: the other half</b></td><td>21 of the 52 endpoints are not built: the insight views (overview, system health, failed jobs with retry, audit log, notices), the integration views (connections, sync history, webhooks) and support sessions. The audit log first needs a design for actions that belong to no store.</td><td><span class="size">L</span></td></tr>
+        <tr><td><b>Platform admin: what is left</b></td><td>The admin pages the web asked for are built on the backend (see the admin section above). Left: system monitoring and failed jobs with retry (removed from the menu), auditing refused admin actions, a purge job for the activity log, and the web side of all of it.</td><td><span class="size">M</span></td></tr>
         <tr><td><b>Marketplace channels</b></td><td>Two web screens and the admin integration views. The integration service exists but simulates the marketplaces; no real Shopee, Lazada or TikTok connection is made.</td><td><span class="size">L</span></td></tr>
         <tr><td><b>Email flows</b></td><td>Staff invitations, forgot and reset password, email verification. The mail service has one template. The decision for admin-created owners is not to build an invite: owners sign up and start on the free plan.</td><td><span class="size">M</span></td></tr>
       </tbody>
@@ -475,7 +475,7 @@
       <li><b>Payment confirmation at the till.</b> A card or QR payment is confirmed on the cashier's word (a reference is required and who confirmed is recorded). Decide whether it must be verified with the payment provider before the sale completes.</li>
       <li><b>Platform-scope audit.</b> Admin actions that belong to no store (creating an admin, changing settings, ending an account's sessions) need their own audit design before they can emit events.</li>
       <li><b>Two-factor sign-in for platform admins</b> before production use.</li>
-      <li><b>What to build next:</b> wave 2 of the business rules (overnight schedules, staff names kept, net revenue, the audit log), the insight read models for the admin (overview, monitoring, failed jobs, notices), the integration admin views, or support sessions.</li>
+      <li><b>What to build next:</b> wave 2 of the business rules (overnight schedules, staff names kept, net revenue, actor identity on store audit rows), wiring the web admin to the new admin API (dashboard, activity log, announcements, integrations, support sessions) and applying the infra topology change.</li>
     </ol>
   </section>
 
