@@ -104,6 +104,8 @@
       "platform": [
         "platform.branch.created",
         "platform.branch.updated",
+        "platform.tenant.created",
+        "platform.tenant.updated",
         "platform.tenant.status_changed",
         "platform.subscription.changed"
       ],
@@ -141,15 +143,31 @@
         "platform.membership.role_changed",
         "platform.tenant.created",
         "platform.tenant.updated",
-        "platform.tenant.status_changed"
+        "platform.tenant.status_changed",
+        "platform.plan.changed",
+        "platform.subscription.changed",
+        "platform.admin.created",
+        "platform.admin.updated",
+        "platform.settings.changed",
+        "platform.account.sessions_revoked",
+        "platform.support_session.started",
+        "platform.support_session.ended"
       ],
       "catalog": [
+        "catalog.usage.changed",
         "catalog.product.created",
         "catalog.product.updated",
         "catalog.product.deactivated",
         "catalog.variant.created",
         "catalog.variant.updated",
         "catalog.variant.deactivated"
+      ],
+      "integration": [
+        "integration.connection.connected",
+        "integration.connection.disconnected",
+        "integration.external_order.mapping_required",
+        "integration.sync_job.failed",
+        "integration.connection.disconnected"
       ],
       "inventory": [
         "inventory.reservation.confirmed",
@@ -182,10 +200,6 @@
       "finance": [
         "finance.cashbook.entry_posted",
         "finance.receivable.payment_applied"
-      ],
-      "integration": [
-        "integration.external_order.mapping_required",
-        "integration.sync_job.failed"
       ]
     }
   }
