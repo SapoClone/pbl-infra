@@ -61,6 +61,7 @@ locals {
     AWS_S3_BUCKET                       = aws_s3_bucket.images.id
     AWS_S3_REGION                       = var.aws_region
     CDN_URL                             = "https://static.${var.domain_name}"
+    WEB_APP_URL                         = "https://app.${var.domain_name}" # origin of the links in emails (password reset)
     AUTH_JWT_TOKEN_EXPIRES_IN           = "15m" # SRS FR-M02-03; pbl-web refreshes on 401
     AUTH_REFRESH_TOKEN_EXPIRES_IN       = "7d"
     AUTH_FORGOT_TOKEN_EXPIRES_IN        = "7d"
